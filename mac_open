@@ -1,0 +1,29 @@
+#!/bin/bash
+
+TMP_FILE=/tmp/app_to_open
+
+fzf-tmux -d 20% --exact --reverse --no-sort <<EOF > $TMP_FILE
+Google Chrome
+Microsoft Outlook
+iTunes
+Finder
+Slack
+Time Out
+iBooks
+Preview
+Skype
+Google Play Music Desktop Player
+EOF
+
+if [ -f $TMP_FILE ] ; then
+  :
+else
+  exit
+fi
+
+perl -pi -e 'chomp if eof' $TMP_FILE
+
+if [ -n "$(cat $TMP_FILE)" ] ; then
+  open -a "$(cat $TMP_FILE)"
+fi
+
