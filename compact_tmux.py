@@ -6,6 +6,11 @@ import sys
 import argparse
 import os
 
+WishList='''
+ * save the file into a temp2 name if comment line is there! I often forget to do that!
+ * Ability to delete a window
+'''
+
 temp_file_name="/tmp/lk_tmux_compact.sh"
 
 def get_current_windows_list(sessionName):
@@ -48,6 +53,8 @@ def main():
     if i[0] in win_no_dict:
       print("Extra pane in window:%s, extra:%s"%(win_no_dict[i[0]],i))
       duplicates = True
+    else:
+      win_no_dict[i[0]] = i
   if duplicates:
     print("Fix the panes first")
     sys.exit(1)
