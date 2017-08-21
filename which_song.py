@@ -4,6 +4,12 @@ from __future__ import print_function
 import json
 import os
 import pprint
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-v","--verbose", help="print orig json", action="store_true")       # captures if --verbosity present or not in arg-list. No arg per-se for this option.
+parsed_args = parser.parse_args()
+
 
 info_file=os.path.expanduser("~/Library/Application Support/Google Play Music Desktop Player/json_store/playback.json")
 
@@ -23,9 +29,10 @@ artist = get(j["song"],"artist","No Artist")
 album = get(j["song"],"album","No Album")
 lyrics = get(j,"songLyrics",None)
 
-print("Orig-Json:")
-pprint.pprint(j)
-print("--"*40)
+if parsed_args.verbose:
+    print("Orig-Json:")
+    pprint.pprint(j)
+    print("--"*40)
 print("Title:  {}".format(title))
 print("Artist: {}".format(artist))
 print("Album:  {}".format(album))
