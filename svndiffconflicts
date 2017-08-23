@@ -1,0 +1,45 @@
+#!/bin/bash
+
+if [[ -z "$1" ]] ; then
+    echo "Supply file to resolved"
+    exit 1
+fi
+
+sanity=$(svn status | grep '^C' | grep "$1")
+
+if [[ -z "$sanity"  ]]; then
+    echo "Couldn't spot ${1} in conflict files"
+    exit 1
+fi
+
+MERGED="$1"
+LCONFL=/tmp/incoming.$(basename ${MERGED})
+RCONFL=/tmp/existing.$(basename ${MERGED})
+
+
+# Use gnu sed if on OSX for better portability (brew install gnu-sed)
+GNU_SED="gsed"
+type $GNU_SED >/dev/null 2>&1 || GNU_SED="sed"
+
+
+# Always delete our temp files; Git will handle it's own temp files
+trap 'rm -f "'"${LCONFL}"'" "'"${RCONFL}"'"' SIGINT SIGTERM EXIT
+
+# Remove the conflict markers for each 'side' and put each into a temp file
+echo $GNU_SED -r -e '/^<<<<<<< /,/^=======\r?$/d' -e '/^>>>>>>> /d' "${MERGED}" '>' "${LCONFL}"
+echo $GNU_SED -r -e '/^=======\r?$/,/^>>>>>>> /d' -e '/^<<<<<<< /d' "${MERGED}" '>' "${RCONFL}"
+$GNU_SED -r -e '/^<<<<<<< /,/^=======\r?$/d' -e '/^>>>>>>> /d' "${MERGED}" > "${LCONFL}"
+$GNU_SED -r -e '/^=======\r?$/,/^>>>>>>> /d' -e '/^<<<<<<< /d' "${MERGED}" > "${RCONFL}"
+
+# Fire up vimdiff
+$HOME/bin/vim -f -R -d "${LCONFL}" "${RCONFL}" -c ":set noro"
+
+EC=$?
+
+# Overwrite $MERGED only if vimdiff exits cleanly.
+if [[ $EC == "0" ]] ; then
+    cat "${LCONFL}" > "${MERGED}"
+    svn resolve --accept=working "${MERGED}"
+fi
+
+exit $EC
