@@ -18,16 +18,23 @@ class GetUserInput(Thread):
         global user_in_loop
         global play_pause_state
         global player
-        prompt = "Command:"
-        pbar_tot = player.get_length()
+        pbar_tot = 0
+        while pbar_tot == 0:
+            pbar_tot = player.get_length()
+            prompt = "Total: {}-{}s".format(pbar_tot/60000, (pbar_tot%60000)/1000)
+            sleep(0.5)
         pbar_sofar = 0
-        with tqdm.tqdm(total=pbar_tot, unit="s", unit_scale=True, unit_divisor=1000) as pbar:
+        with tqdm.tqdm(total=pbar_tot) as pbar:
             pbar.set_description(prompt)
             while (user_in_loop):
                 try:
                     i, o, e = select.select( [sys.stdin], [], [], 1)
-                    pbar_new = player.get_time() - pbar_sofar
+                    curr_time = player.get_time()
+                    pbar_new = curr_time - pbar_sofar
                     if (pbar_new > 0):
+                        to_set = {}
+                        to_set["curr"] = "{}:{}s".format(curr_time/60000, (curr_time%60000)/1000)
+                        pbar.set_postfix(to_set, refresh=False)
                         pbar.update(pbar_new)
                         pbar_sofar += pbar_new
                     if (i):
@@ -48,9 +55,10 @@ class GetUserInput(Thread):
                                 print("setting volume to {}".format(level))
                                 player.audio_set_volume(level)
                         elif variable.startswith('s '):
-                            time = int(variable[2:])
-                            if time < player.get_length() and time > 0:
-                                player.set_time(time)
+                            mn, sc = map(int, variable[2:].split(' '))
+                            tot = (mn * 60 + sc) * 1000
+                            if tot < player.get_length() and tot > 0:
+                                player.set_time(tot)
                             else:
                                 print ("time:{} is out of range 1-{}".format(time, player.get_length()))
                         else:
@@ -71,7 +79,13 @@ class PlayerWait(Thread):
                     print ("Play completed")
                     user_in_loop = 0
 
-player = vlc.MediaPlayer(sys.argv[1])
+
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("file",   help="File to play!")
+parsed_args = parser.parse_args()
+
+player = vlc.MediaPlayer(parsed_args.file)
 player.play()
 t1 = GetUserInput()
 t2 = PlayerWait()
