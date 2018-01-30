@@ -19,7 +19,7 @@ class GetUserInput(Thread):
         global play_pause_state
         global player
         pbar_tot = 0
-        while pbar_tot == 0:
+        while user_in_loop and pbar_tot == 0:
             pbar_tot = player.get_length()
             prompt = "Total: {}-{}s".format(pbar_tot/60000, (pbar_tot%60000)/1000)
             sleep(0.5)
@@ -86,7 +86,10 @@ parser.add_argument("file",   help="File to play!")
 parsed_args = parser.parse_args()
 
 player = vlc.MediaPlayer(parsed_args.file)
-player.play()
+r = player.play()
+if r != 0:
+    print ("some trouble in playing")
+    sys.exit(0)
 t1 = GetUserInput()
 t2 = PlayerWait()
 t1.start()
