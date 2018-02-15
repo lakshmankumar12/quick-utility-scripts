@@ -1,0 +1,11 @@
+#!/bin/bash
+
+#This is a hack script to invoke from vim for svn command
+
+prefix=""
+if [ -f .branch_name ] ; then
+  prefix="$(cat .branch_name)"
+  cd $prefix
+fi
+
+svn diff | grep Index: | awk -v p=$prefix '{print p "/" $2}'

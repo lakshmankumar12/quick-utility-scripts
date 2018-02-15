@@ -20,8 +20,12 @@ class MyProcess:
         self.ppid = p.ppid()
         self.tty = p.terminal()
         if self.ppid == 0:
-            root = self
-            self.parent = self
+            if not root:
+                root = self
+                self.parent = self
+            else:
+                self.parent = root
+                self.parent.children.append(self)
         else:
             if self.ppid in process_hierarchy:
                 self.parent = process_hierarchy[self.ppid]
@@ -36,12 +40,13 @@ class MyProcess:
                 self.children.append(ip)
             del unparented[self.pid]
 
-indentString=u"\u250a\u2027\u2027"
+#indentString=u"\u250a\u2027\u2027"
+indentString="|--"
 def print_hierarchy(myp, indentLevel):
     highlight_term = ""
-    if myp.parent.tty != myp.tty:
-        highlight_term = "**"
-    print (u"{}{}:{} --> {}{}".format(indentString*indentLevel, myp.pid, myp.name, highlight_term, myp.tty))
+    if myp.tty != None and myp.parent.tty != myp.tty:
+        highlight_term = "(N)"
+    print ("{}{}:{} --> {}{}".format(indentString*indentLevel, myp.pid, myp.name, highlight_term, myp.tty))
     for i in myp.children:
         print_hierarchy(i, indentLevel+1)
 
@@ -67,4 +72,6 @@ def main():
 try:
     main()
 except Exception,e:
-    pdb.set_trace()
+    #pdb.set_trace()
+    raise
+
