@@ -23,7 +23,7 @@ def parse_song_info(infile):
         sys.exit(1)
     return (title, artist, album)
 
-def update_in_db(infile, outfile, song):
+def update_in_db(infile, outfile, song, rating):
     (title, artist, album) = song
     to_find = "{}`{}`{}".format(song[0],song[1],song[2])
     found_line = None
@@ -36,14 +36,17 @@ def update_in_db(infile, outfile, song):
     now_str = now.strftime('%Y-%m-%d-%H-%M-%S')
     if found_line:
         ex_val = found_line.split('`')
-        final_line="{}`{}`{}\n".format(to_find, ex_val[3], now_str)
+        if rating == "None":
+            rating=ex_val[5]
+        final_line="{}`{}`{}`{}\n".format(to_find, ex_val[3], now_str, rating)
     else:
-        final_line="{}`{}`{}\n".format(to_find, now_str, now_str)
+        final_line="{}`{}`{}`{}\n".format(to_find, now_str, now_str, rating)
     outfile.write(final_line)
     return final_line
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-f","--filein",  help="use filein instead of stdin")       # captures if --verbosity present or not in arg-list. No arg per-se for this option.
+parser.add_argument("-r","--rating",  help="use the rating")       # captures if --verbosity present or not in arg-list. No arg per-se for this option.
 parser.add_argument("--songdb",  help="file for song-db, default: listened_songs")       # captures if --verbosity present or not in arg-list. No arg per-se for this option.
 
 cmd_options = parser.parse_args()
@@ -58,6 +61,10 @@ else:
 if cmd_options.songdb:
     db = cmd_options.songdb
 
+rating="None"
+if cmd_options.rating:
+    rating=cmd_options.rating
+
 target_file=".{}.out".format(db)
 
 infile=open(db,'r')
@@ -66,7 +73,7 @@ outfile=open(target_file,'w')
 song = parse_song_info(read_fd)
 if close_fd: close(read_fd)
 
-outline = update_in_db(infile, outfile, song)
+outline = update_in_db(infile, outfile, song, rating)
 
 print ("wrote {} to {}".format(outline,db))
 
