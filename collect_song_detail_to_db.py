@@ -27,20 +27,25 @@ def update_in_db(infile, outfile, song, rating):
     (title, artist, album) = song
     to_find = "{}`{}`{}".format(song[0],song[1],song[2])
     found_line = None
+    song_no = 1
     for line in infile:
         if to_find in line:
             found_line = line.strip()
         else:
-            outfile.write(line)
+            fields=line.split('`')
+            fields[0] = '{}'.format(song_no)
+            new_line = '`'.join(fields)
+            outfile.write(new_line)
+            song_no += 1
     now = datetime.datetime.now()
     now_str = now.strftime('%Y-%m-%d-%H-%M-%S')
+    first_listened = now_str
     if found_line:
         ex_val = found_line.split('`')
         if rating == "None":
-            rating=ex_val[5]
-        final_line="{}`{}`{}`{}\n".format(to_find, ex_val[3], now_str, rating)
-    else:
-        final_line="{}`{}`{}`{}\n".format(to_find, now_str, now_str, rating)
+            rating=ex_val[6]
+            first_listened=ex_val[4]
+    final_line="{}`{}`{}`{}`{}\n".format(song_no, to_find, first_listened, now_str, rating)
     outfile.write(final_line)
     return final_line
 
