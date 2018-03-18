@@ -15,9 +15,9 @@ if [ $1 == "-k" ] ; then
   tmux send-keys -t "docker" Escape ":qa" "C-m"
   tmux send-keys -t "quick" Escape ":qa" "C-m"
   tmux send-keys -t "mio-grab" Escape ":qa" "C-m"
-  tmux send-keys -t "iQuest" Escape ":qa" "C-m"
-  tmux send-keys -t "iBit" Escape ":qa" "C-m"
-  tmux send-keys -t "vim-term" Escape ":qa" "C-m"
+  tmux send-keys -t "mp3" Escape ":qa" "C-m"
+  tmux send-keys -t "mac-script" Escape ":qa" "C-m"
+  tmux send-keys -t "ppl" Escape ":qa" "C-m"
   tmux send-keys -t "free-term" Escape ":qa" "C-m"
 
 else
@@ -35,9 +35,9 @@ else
   tmux new-window -d -t 8 -n "docker" -c "$HOME/github/devbox"
   tmux new-window -d -t 9 -n "quick" -c "$HOME/github/quick-utility-scripts"
   tmux new-window -d -t 10 -n "mio-grab" -c "$HOME/gitlab/mio-track-grab"
-  tmux new-window -d -t 11 -n "iQuest" -c "$HOME/gitlab/interviewquestions"
-  tmux new-window -d -t 12 -n "iBit" -c "$HOME/gitlab/interview-bit"
-  tmux new-window -d -t 13 -n "vim-term" -c "$HOME"
+  tmux new-window -d -t 11 -n "mp3" -c "$HOME/github/mp3_tag_editor"
+  tmux new-window -d -t 12 -n "mac-script" -c "$HOME/github/mac_scripts"
+  tmux new-window -d -t 13 -n "ppl" -c "$HOME/gitlab/office-api-try/python3-connect-rest-sample"
   tmux new-window -d -t 14 -n "free-term" -c "$HOME"
 
   tmux send-keys -t "mac-notes" "vi" "C-m"
@@ -51,9 +51,9 @@ else
   tmux send-keys -t "docker" "vi" "C-m"
   tmux send-keys -t "quick" "vi" "C-m"
   tmux send-keys -t "mio-grab" "vi" "C-m"
-  tmux send-keys -t "iQuest" "vi" "C-m"
-  tmux send-keys -t "iBit" "vi" "C-m"
-  tmux send-keys -t "vim-term" "vi" "C-m"
+  tmux send-keys -t "mp3" "vi" "C-m"
+  tmux send-keys -t "mac-script" "vi" "C-m"
+  tmux send-keys -t "ppl" "vi" "C-m"
   tmux send-keys -t "free-term" "C-m"
 
   tmux -2 attach -d -t mac-main
