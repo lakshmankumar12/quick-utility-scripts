@@ -81,6 +81,8 @@ def process_char(gs, char):
     if gs.user_in_so_far == "":
         if char == 'q':
             flush = 1
+            gs.player.stop()
+            gs.song_playing = 0
             gs.running = 0
         elif char == 'p':
             if gs.play_pause == 1:
@@ -136,25 +138,44 @@ def process_char(gs, char):
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("-s", "--shuffle", help="Shuffle", action="store_true")
+parser.add_argument("-e", "--noerrorsuppress", help="Dont redirect stderr to /tmp/qplayerr.log", action="store_true")
+parser.add_argument("-l", "--playlist", help="Treat each arg as a file containing path to files", action="store_true")
 parser.add_argument("files", nargs="+", help="Files to play!")
 cmd_options = parser.parse_args()
 
 files=[]
 
-for i in cmd_options.files:
-    if os.path.isfile(i):
-        files.append(i)
-    elif os.path.isdir(i):
-        for root, dirnames, filenames in os.walk(i):
-            for filename in fnmatch.filter(filenames, '*.mp3'):
-                files.append(os.path.join(root, filename))
-    else:
-        print("{} doesn't seem to be a dir or file".format(i))
+if cmd_options.playlist:
+    for f in cmd_options.files:
+        with open (f,'r') as fd:
+            for l in fd:
+                l = l.strip()
+                if os.path.isfile(l):
+                    files.append(l)
+else:
+    for i in cmd_options.files:
+        if os.path.isfile(i):
+            files.append(i)
+        elif os.path.isdir(i):
+            for root, dirnames, filenames in os.walk(i):
+                for filename in fnmatch.filter(filenames, '*.mp3'):
+                    files.append(os.path.join(root, filename))
+        else:
+            print("{} doesn't seem to be a dir or file".format(i))
+
+if not files:
+    print ("Couldn't get even 1 file to play")
+    sys.exit(1)
 
 if cmd_options.shuffle:
     import random
     random.seed()
     random.shuffle(files)
+
+if not cmd_options.noerrorsuppress:
+    fd = open('/tmp/qplayerr.log','a')
+    os.close(sys.stderr.fileno())
+    os.dup2(fd.fileno(), sys.stderr.fileno())
 
 # print ("Enter something:")
 # so_far=""
@@ -184,8 +205,8 @@ for f in files:
     gs.play_pause = 1
     gs.song_playing = 1
     if r != 0:
-        print ("some trouble in playing")
-        sys.exit(0)
+        print ("Trouble in playing file {}".format(f))
+        continue
     set_volume(gs, gs.curr_volume)
     while gs.song_playing and gs.running:
         print_current_status(gs)
