@@ -24,6 +24,7 @@ class GlobalState:
         self.tot_time = None
         self.curr_time = None
         self.player = None
+        self.curr_volume = 100
 
         self.user_in_so_far = ""
 
@@ -62,6 +63,17 @@ def update_display(gs):
     else:
         gs.disp_st = "Paused"
 
+def get_volume(gs):
+    if gs.player:
+        gs.curr_volume = gs.player.audio_get_volume()
+    return gs.curr_volume
+
+def set_volume(gs, val):
+    if val > 0 and val < 100:
+        if gs.player:
+            gs.player.audio_set_volume(val)
+        gs.curr_volume = val
+
 def process_char(gs, char):
     #print ("processing char:{}, so_far:{}".format(char,gs.user_in_so_far))
     flush = 0
@@ -90,7 +102,7 @@ def process_char(gs, char):
     elif len (gs.user_in_so_far) == 1:
         if gs.user_in_so_far[0] == 'g':
             if char == 'v':
-                print ("\ncurrent volume is {}".format(gs.player.audio_get_volume()))
+                print ("\ncurrent volume is {}".format(get_volume(gs)))
                 flush = 1
             else:
                 flush = 1
@@ -105,8 +117,7 @@ def process_char(gs, char):
         if char == "\n" or char == ';':
             if gs.user_in_so_far[0] == 'v':
                 val=int(gs.user_in_so_far[1:])
-                if val > 0 and val < 100:
-                    gs.player.audio_set_volume(val)
+                set_volume(gs, val)
                 flush = 1
             elif gs.user_in_so_far[0] == 's':
                 val=int(gs.user_in_so_far[1:])
@@ -175,6 +186,7 @@ for f in files:
     if r != 0:
         print ("some trouble in playing")
         sys.exit(0)
+    set_volume(gs, gs.curr_volume)
     while gs.song_playing and gs.running:
         print_current_status(gs)
 
