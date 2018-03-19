@@ -22,7 +22,6 @@ class GlobalState:
 
         self.files=[]
         self.curr_file_n = 0
-        self.curr_file_fd = None
 
         self.tot_time = None
         self.curr_time = None
@@ -38,7 +37,7 @@ class GlobalState:
 
 def print_current_status(gs):
     update_display(gs)
-    current_line="{:50.50s}|{:10s}|{:17s}|{:5s}".format(gs.disp_title, gs.disp_st, gs.disp_time, gs.user_in_so_far)
+    current_line="{:3d}|{:50.50s}|{:10s}|{:17s}|{:5s}".format(gs.curr_file_n+1, gs.disp_title, gs.disp_st, gs.disp_time, gs.user_in_so_far)
     print("\r{}".format(current_line),end="")
     sys.stdout.flush()
 
@@ -79,51 +78,50 @@ def set_volume(gs, val):
 
 def process_char(gs, char):
     #print ("processing char:{}, so_far:{}".format(char,gs.user_in_so_far))
-    flush = 0
     add = 0
     if gs.user_in_so_far == "":
         if char == 'q':
-            flush = 1
             gs.player.stop()
             gs.song_playing = 0
             gs.running = 0
-        elif char == 'p':
+        elif char == ' ':
             if gs.play_pause == 1:
                 gs.player.pause()
             else:
                 gs.player.play()
                 sleep(0.5)
             gs.play_pause = 1 - gs.play_pause
-            flush = 1
         elif char == 'n':
             gs.player.stop()
             gs.song_playing = 0
+        elif char == 'p':
+            if gs.curr_file_n >= 1:
+                gs.player.stop()
+                gs.song_playing = 0
+                gs.curr_file_n -= 2
         elif char == 'g':
             add = 1
         elif char == 'v' or char == 's':
             add = 1
         else:
-            flush = 1
+            pass
     elif len (gs.user_in_so_far) == 1:
         if gs.user_in_so_far[0] == 'g':
             if char == 'v':
                 print ("\ncurrent volume is {}".format(get_volume(gs)))
-                flush = 1
             else:
-                flush = 1
                 pass
         elif gs.user_in_so_far[0] == 'v' or gs.user_in_so_far[0] == 's':
             #we expect numbers only
             if char.isdigit():
                 add = 1
             elif char == "`" or char == "\n" or char == ';':
-                flush = 1
+                pass
     else:
         if char == "\n" or char == ';':
             if gs.user_in_so_far[0] == 'v':
                 val=int(gs.user_in_so_far[1:])
                 set_volume(gs, val)
-                flush = 1
             elif gs.user_in_so_far[0] == 's':
                 val=int(gs.user_in_so_far[1:])
                 val *= 1000
@@ -132,11 +130,11 @@ def process_char(gs, char):
         elif char.isdigit():
             add = 1
         else:
-            flush = 1
-    if flush:
-        gs.user_in_so_far = ""
+            pass
     if add:
         gs.user_in_so_far += char
+    else:
+        gs.user_in_so_far = ""
 
 import argparse
 parser = argparse.ArgumentParser()
