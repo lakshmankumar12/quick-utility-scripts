@@ -19,7 +19,10 @@ class GlobalState:
         self.running = 1
         self.song_playing = 0
         self.play_pause = 1
-        self.curr_file_name = "Unknown"
+
+        self.files=[]
+        self.curr_file_n = 0
+        self.curr_file_fd = None
 
         self.tot_time = None
         self.curr_time = None
@@ -52,10 +55,10 @@ def update_display(gs):
         gs.disp_time = "{:02d}:{:02d}:{:02d}/{:02d}:{:02d}:{:02d}".format(
                 gs.curr_time[0],gs.curr_time[1],gs.curr_time[2],
                 gs.tot_time[0],gs.tot_time[1],gs.tot_time[2])
-    if len(gs.curr_file_name) > 50:
-        gs.disp_title = gs.curr_file_name[-50:]
+    if len(gs.files[gs.curr_file_n]) > 50:
+        gs.disp_title = gs.files[gs.curr_file_n][-50:]
     else:
-        gs.disp_title = gs.curr_file_name
+        gs.disp_title = gs.files[gs.curr_file_n]
     if gs.song_playing != 1:
         gs.disp_title = "Not Playig"
     elif gs.play_pause == 1:
@@ -197,15 +200,18 @@ if not cmd_options.noerrorsuppress:
 
 
 gs = GlobalState()
+gs.files = files
+gs.curr_file_n = 0
 
-for f in files:
-    gs.curr_file_name = f
+while gs.curr_file_n < len(gs.files):
+    f = gs.files[gs.curr_file_n]
     gs.player = vlc.MediaPlayer(f)
     r = gs.player.play()
     gs.play_pause = 1
     gs.song_playing = 1
     if r != 0:
         print ("Trouble in playing file {}".format(f))
+        gs.curr_file_n += 1
         continue
     set_volume(gs, gs.curr_volume)
     while gs.song_playing and gs.running:
@@ -230,4 +236,5 @@ for f in files:
                 break
     del gs.player
     gs.player = None
+    gs.curr_file_n += 1
 
