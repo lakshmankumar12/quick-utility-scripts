@@ -13,6 +13,8 @@ import sys, tty, termios
 import random
 import os
 import fnmatch
+import mutagen
+import mutagen.id3
 
 class GlobalState:
     def __init__(self):
@@ -109,6 +111,9 @@ def process_char(gs, char):
         if gs.user_in_so_far[0] == 'g':
             if char == 'v':
                 print ("\ncurrent volume is {}".format(get_volume(gs)))
+            elif char == 'p':
+                dump_playlist(gs)
+                print ("\nCurrent playlist dumped")
             else:
                 pass
         elif gs.user_in_so_far[0] == 'v' or gs.user_in_so_far[0] == 's':
@@ -135,6 +140,28 @@ def process_char(gs, char):
         gs.user_in_so_far += char
     else:
         gs.user_in_so_far = ""
+
+def dump_playlist(gs, filetodump="/tmp/currp.lst"):
+    with open (filetodump, 'w') as fd:
+        for n,f in enumerate(gs.files,1):
+            if gs.curr_file_n == n-1:
+                curr="*"
+            else:
+                curr=" "
+            tit="***"
+            art="***"
+            alb="***"
+            try:
+                tags=mutagen.id3.ID3(f, v2_version=3)
+                if 'TIT2' in tags:
+                    tit=tags['TIT2']
+                if 'TALB' in tags:
+                    alb=tags['TALB']
+                if 'TPE1' in tags:
+                    art=tags['TPE1']
+            except:
+                pass
+            print ("{:1s}{:4d}|{:50.50s}|{:50.50s}|{:50.50s}|{:s}".format(curr,n,tit,art,alb,f), file=fd)
 
 import argparse
 parser = argparse.ArgumentParser()
@@ -178,28 +205,12 @@ if not cmd_options.noerrorsuppress:
     os.close(sys.stderr.fileno())
     os.dup2(fd.fileno(), sys.stderr.fileno())
 
-# print ("Enter something:")
-# so_far=""
-# while 1:
-    # i, o, e = select.select( [sys.stdin], [], [], 1)
-    # if i:
-        # a = getch()
-        # print("You entered :{}, so_far: {}".format(a,so_far))
-        # if a == '\n':
-            # break
-        # elif a == '`':
-            # so_far = ""
-        # elif a == ';':
-            # break
-        # else:
-            # so_far+=a
-    # print ("\r{:20s}".format(so_far),end="")
-# sys.exit(0)
-
 
 gs = GlobalState()
 gs.files = files
 gs.curr_file_n = 0
+
+dump_playlist(gs)
 
 while gs.curr_file_n < len(gs.files):
     f = gs.files[gs.curr_file_n]
