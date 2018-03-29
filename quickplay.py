@@ -15,6 +15,7 @@ import os
 import fnmatch
 import mutagen
 import mutagen.id3
+import socket
 
 class GlobalState:
     def __init__(self):
@@ -78,6 +79,14 @@ def set_volume(gs, val):
             gs.player.audio_set_volume(val)
         gs.curr_volume = val
 
+def play_or_pause():
+    if gs.play_pause == 1:
+        gs.player.pause()
+    else:
+        gs.player.play()
+        sleep(0.5)
+    gs.play_pause = 1 - gs.play_pause
+
 def process_char(gs, char):
     #print ("processing char:{}, so_far:{}".format(char,gs.user_in_so_far))
     add = 0
@@ -87,12 +96,7 @@ def process_char(gs, char):
             gs.song_playing = 0
             gs.running = 0
         elif char == ' ':
-            if gs.play_pause == 1:
-                gs.player.pause()
-            else:
-                gs.player.play()
-                sleep(0.5)
-            gs.play_pause = 1 - gs.play_pause
+            play_or_pause()
         elif char == 'n':
             gs.player.stop()
             gs.song_playing = 0
@@ -163,6 +167,22 @@ def dump_playlist(gs, filetodump="/tmp/currp.lst"):
                 pass
             print ("{:1s}{:4d}|{:50.50s}|{:50.50s}|{:50.50s}|{:s}".format(curr,n,tit,art,alb,f), file=fd)
 
+def initialize_udp_command_listener(gs, cmd_options):
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+    host="127.0.0.1"
+    port=19999
+    s.bind((host, port))
+
+    return s
+
+def process_udp_command(s):
+    cmd,data = s.recvfrom(1024)
+    cmd = cmd.strip()
+    if cmd == 'pause':
+        play_or_pause()
+
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("-s", "--shuffle", help="Shuffle", action="store_true")
@@ -212,6 +232,8 @@ gs.curr_file_n = 0
 
 dump_playlist(gs)
 
+udp = initialize_udp_command_listener(gs, cmd_options)
+
 while gs.curr_file_n < len(gs.files) and gs.running:
     f = gs.files[gs.curr_file_n]
     gs.player = vlc.MediaPlayer(f)
@@ -231,10 +253,12 @@ while gs.curr_file_n < len(gs.files) and gs.running:
         char = None
         try:
             tty.setraw(sys.stdin.fileno())
-            i, o, e = select.select( [sys.stdin], [], [], 1)
+            i, o, e = select.select( [sys.stdin, udp], [], [], 1)
             for f in i:
                 if f == sys.stdin:
                     char = sys.stdin.read(1)
+                if f == udp:
+                    process_udp_command(udp)
         finally:
             termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
         if char:
