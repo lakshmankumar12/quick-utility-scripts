@@ -212,7 +212,7 @@ gs.curr_file_n = 0
 
 dump_playlist(gs)
 
-while gs.curr_file_n < len(gs.files):
+while gs.curr_file_n < len(gs.files) and gs.running:
     f = gs.files[gs.curr_file_n]
     gs.player = vlc.MediaPlayer(f)
     r = gs.player.play()
@@ -232,8 +232,9 @@ while gs.curr_file_n < len(gs.files):
         try:
             tty.setraw(sys.stdin.fileno())
             i, o, e = select.select( [sys.stdin], [], [], 1)
-            if i:
-                char = sys.stdin.read(1)
+            for f in i:
+                if f == sys.stdin:
+                    char = sys.stdin.read(1)
         finally:
             termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
         if char:
@@ -247,3 +248,4 @@ while gs.curr_file_n < len(gs.files):
     gs.player = None
     gs.curr_file_n += 1
 
+dump_playlist(gs)
