@@ -188,6 +188,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-s", "--shuffle", help="Shuffle", action="store_true")
 parser.add_argument("-e", "--noerrorsuppress", help="Dont redirect stderr to /tmp/qplayerr.log", action="store_true")
 parser.add_argument("-l", "--playlist", help="Treat each arg as a file containing path to files", action="store_true")
+parser.add_argument("-t", "--tempmode", help="Dont write playlist file in end", action="store_true")
 parser.add_argument("files", nargs="+", help="Files to play!")
 cmd_options = parser.parse_args()
 
@@ -230,7 +231,8 @@ gs = GlobalState()
 gs.files = files
 gs.curr_file_n = 0
 
-dump_playlist(gs)
+if not cmd_options.tempmode:
+    dump_playlist(gs)
 
 udp = initialize_udp_command_listener(gs, cmd_options)
 
@@ -272,4 +274,5 @@ while gs.curr_file_n < len(gs.files) and gs.running:
     gs.player = None
     gs.curr_file_n += 1
 
-dump_playlist(gs)
+if not cmd_options.tempmode:
+    dump_playlist(gs)
