@@ -26,6 +26,9 @@ class GlobalState:
         self.files=[]
         self.curr_file_n = 0
 
+        self.starfile = None
+        self.dumpfile = None
+
         self.tot_time = None
         self.curr_time = None
         self.player = None
@@ -109,6 +112,8 @@ def process_char(gs, char):
             add = 1
         elif char == 'v' or char == 's':
             add = 1
+        elif char == '*':
+            starcurrent(gs)
         else:
             pass
     elif len (gs.user_in_so_far) == 1:
@@ -145,8 +150,8 @@ def process_char(gs, char):
     else:
         gs.user_in_so_far = ""
 
-def dump_playlist(gs, filetodump="/tmp/currp.lst"):
-    with open (filetodump, 'w') as fd:
+def dump_playlist(gs):
+    with open (gs.dumpfile, 'w') as fd:
         for n,f in enumerate(gs.files,1):
             if gs.curr_file_n == n-1:
                 curr="*"
@@ -183,12 +188,24 @@ def process_udp_command(s):
     if cmd == 'pause':
         play_or_pause()
 
+def starcurrent(gs):
+    with open (gs.starfile,'a') as fd:
+        try:
+            curr_file_name = gs.files[gs.curr_file_n]
+            abspath = os.path.abspath(gs.files[gs.curr_file_n])
+            fd.write(abspath + '\n')
+            print("Starred")
+        except:
+            print("Couldn't get abs path")
+
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("-s", "--shuffle", help="Shuffle", action="store_true")
 parser.add_argument("-e", "--noerrorsuppress", help="Dont redirect stderr to /tmp/qplayerr.log", action="store_true")
 parser.add_argument("-l", "--playlist", help="Treat each arg as a file containing path to files", action="store_true")
 parser.add_argument("-t", "--tempmode", help="Dont write playlist file in end", action="store_true")
+parser.add_argument("-r", "--starfile", help="write this in starred files", default="/tmp/starred")
+parser.add_argument("-d", "--dumpfile", help="use this dump file", default="/tmp/currp.lst")
 parser.add_argument("files", nargs="+", help="Files to play!")
 cmd_options = parser.parse_args()
 
@@ -221,6 +238,8 @@ if cmd_options.shuffle:
     random.seed()
     random.shuffle(files)
 
+# Keep this last in options - so that you
+# see any errors
 if not cmd_options.noerrorsuppress:
     fd = open('/tmp/qplayerr.log','a')
     os.close(sys.stderr.fileno())
@@ -230,6 +249,8 @@ if not cmd_options.noerrorsuppress:
 gs = GlobalState()
 gs.files = files
 gs.curr_file_n = 0
+gs.starfile = cmd_options.starfile
+gs.dumpfile = cmd_options.dumpfile
 
 if not cmd_options.tempmode:
     dump_playlist(gs)
