@@ -110,7 +110,7 @@ def process_char(gs, char):
                 gs.curr_file_n -= 2
         elif char == 'g':
             add = 1
-        elif char == 'v' or char == 's':
+        elif char == 'v' or char == 's' or char == 'j':
             add = 1
         elif char == '*':
             starcurrent(gs)
