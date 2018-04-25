@@ -13,11 +13,14 @@ def parse_song_info(infile):
     for line in infile:
         line = line.strip()
         if 'Title:' in line:
-            title = line[9:]
+            title = ':'.join(map(str.strip, line.split(':')[1:]))
+            #title = line.split(':')[1].strip()
         elif 'Artist:' in line:
-            artist = line[9:]
+            artist = ':'.join(map(str.strip, line.split(':')[1:]))
+            #artist = line.split(':')[1].strip()
         elif 'Album' in line:
-            album = line[9:]
+            album = ':'.join(map(str.strip, line.split(':')[1:]))
+            #album = line.split(':')[1].strip()
     if not title or not artist or not album:
         print ("Couldn't spot title/artist/album fully = {}/{}/{}".format(title, artist, album))
         sys.exit(1)
@@ -76,7 +79,7 @@ infile=open(db,'r')
 outfile=open(target_file,'w')
 
 song = parse_song_info(read_fd)
-if close_fd: close(read_fd)
+if close_fd: read_fd.close()
 
 outline = update_in_db(infile, outfile, song, rating)
 

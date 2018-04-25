@@ -30,7 +30,6 @@ def get_lyrics(author, title):
     except IOError:
         print("/tmp/genius_client_access_token not there?.. Trying lyricwikia")
     except:
-        raise
         print("Coudlnt' get it off lyricsgenius.. Trying lyricwikia")
 
     try:
@@ -43,9 +42,9 @@ def get_lyrics(author, title):
         lyrics = PyLyrics.PyLyrics.getLyrics(author,title)
         return (lyrics,'(3)pylyrics')
     except ValueError:
-        print ("Couldn't get it off pylyrics")
+        print ("Couldn't get it off pylyrics for {}, {}".format(title, author))
         sys.exit(1)
 
-(lyrics,source) = get_lyrics(parsed_args.author,parsed_args.title)
+(lyrics,source) = get_lyrics(parsed_args.author.strip(),parsed_args.title.strip())
 print ("Lyrics from {} for title: {} - author: {}".format(source,parsed_args.title,parsed_args.author))
 print (lyrics)
