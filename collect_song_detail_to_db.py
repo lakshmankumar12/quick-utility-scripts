@@ -18,7 +18,7 @@ def parse_song_info(infile):
         elif 'Artist:' in line:
             artist = ':'.join(map(str.strip, line.split(':')[1:]))
             #artist = line.split(':')[1].strip()
-        elif 'Album' in line:
+        elif line.startswith('Album:'):
             album = ':'.join(map(str.strip, line.split(':')[1:]))
             #album = line.split(':')[1].strip()
     if not title or not artist or not album:

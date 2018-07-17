@@ -11,6 +11,7 @@ OutputFormat=\
 Timeout
 -------
 BreakAt: {}
+UtcNow:  {}
 Now:     {}
 Diff:    {}'''
 
@@ -24,10 +25,11 @@ def getNextDueInfo(fileName):
 
 def getTimeToBreak(utcBreakTime):
     utcnow = datetime.datetime.utcnow()
+    now = datetime.datetime.now()
     diff = utcBreakTime - utcnow
-    return (utcnow,diff)
+    return (utcnow,now,diff)
 
 if __name__ == "__main__":
     breakAt = getNextDueInfo(NormalBreakInfoFile)
-    utcnow, diff = getTimeToBreak(breakAt)
-    print (OutputFormat.format(breakAt, utcnow, diff))
+    utcnow, now, diff = getTimeToBreak(breakAt)
+    print (OutputFormat.format(breakAt, utcnow, now, diff))
