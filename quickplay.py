@@ -90,8 +90,42 @@ def play_or_pause():
         sleep(0.5)
     gs.play_pause = 1 - gs.play_pause
 
+helpString=\
+'''Keys:
+    q        -> exit Player
+    Space    -> Play/Pause
+    n        -> Next Song
+    p        -> Prev Song
+    vNN;     -> set volume to NN (0 to 100)
+    sNNN;    -> move to NNN sec
+    *        -> Add to star file
+    gv       -> show current volume
+    gp       -> dump current playlist
+    Left/Right -> move forward/backward by 10s
+    f/r      -> forward/backward by 2s
+    F/R      -> forward/backward by 1min
+    ?        -> Show this help
+'''
+def showHelp():
+    print (helpString)
+
+def move_by_sec(sec):
+    val = gs.player.get_time()
+    val += (sec * 1000)
+    if val < gs.player.get_length() and val > 0:
+        gs.player.set_time(val)
+
 def process_char(gs, char):
-    #print ("processing char:{}, so_far:{}".format(char,gs.user_in_so_far))
+    if len(char) == 3:
+        if char[2] == 'C':
+            #right arrow
+            move_by_sec(10)
+        elif char[2] == 'D':
+            #left arrow
+            move_by_sec(-10)
+        else:
+            pass
+        return
     add = 0
     if gs.user_in_so_far == "":
         if char == 'q':
@@ -110,11 +144,22 @@ def process_char(gs, char):
                 gs.curr_file_n -= 2
         elif char == 'g':
             add = 1
-        elif char == 'v' or char == 's' or char == 'j':
+        elif char == 'v' or char == 's':
             add = 1
         elif char == '*':
             starcurrent(gs)
+        elif char == 'f':
+            move_by_sec(2)
+        elif char == 'r':
+            move_by_sec(-2)
+        elif char == 'F':
+            move_by_sec(60)
+        elif char == 'R':
+            move_by_sec(-60)
+        elif char == '?':
+            showHelp()
         else:
+            print ("\nGot {:d} {}".format(ord(char), char))
             pass
     elif len (gs.user_in_so_far) == 1:
         if gs.user_in_so_far[0] == 'g':
@@ -280,6 +325,11 @@ while gs.curr_file_n < len(gs.files) and gs.running:
             for f in i:
                 if f == sys.stdin:
                     char = sys.stdin.read(1)
+                    if ord(char) == 27:
+                        char = sys.stdin.read(1)
+                        if ord(char) == 91:
+                            char = sys.stdin.read(1)
+                            char = b'\x1b\x5b' + char
                 if f == udp:
                     process_udp_command(udp)
         finally:
