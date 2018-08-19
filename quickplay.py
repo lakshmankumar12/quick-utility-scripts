@@ -321,7 +321,7 @@ while gs.curr_file_n < len(gs.files) and gs.running:
         char = None
         try:
             tty.setraw(sys.stdin.fileno())
-            i, o, e = select.select( [sys.stdin, udp], [], [], 1)
+            i, o, e = select.select( [sys.stdin, udp], [], [], 0.25)
             for f in i:
                 if f == sys.stdin:
                     char = sys.stdin.read(1)
