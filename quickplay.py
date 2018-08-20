@@ -40,12 +40,23 @@ class GlobalState:
         self.disp_time = ""
 
         self.disp_time = "Not Playig"
+        
+        self.a_time = 0
+        self.b_time = 0
+        self.ab_status="  "
 
 def print_current_status(gs):
     update_display(gs)
-    current_line="{:3d}|{:50.50s}|{:10s}|{:17s}|{:5s}".format(gs.curr_file_n+1, gs.disp_title, gs.disp_st, gs.disp_time, gs.user_in_so_far)
+    current_line="{:3d}|{:50.50s}|{:7s}|{:2s}|{:17s}|{:5s}".format(gs.curr_file_n+1, gs.disp_title, gs.disp_st, gs.ab_status, gs.disp_time, gs.user_in_so_far)
     print("\r{}".format(current_line),end="")
     sys.stdout.flush()
+
+def check_ab(gs):
+    if gs.b_time == 0:
+        return
+    curr_time = gs.player.get_time()
+    if (curr_time >= gs.b_time):
+        gs.player.set_time(gs.a_time)
 
 def get_time_from_ms(millis):
     seconds=int((millis/1000)%60)
@@ -105,6 +116,9 @@ helpString=\
     f/r      -> forward/backward by 2s
     F/R      -> forward/backward by 1min
     ?        -> Show this help
+    a/b      -> Set a & b points.
+    c        -> clear both a/b.
+    d        -> clear just b
 '''
 def showHelp():
     print (helpString)
@@ -156,6 +170,25 @@ def process_char(gs, char):
             move_by_sec(60)
         elif char == 'R':
             move_by_sec(-60)
+        elif char == 'a':
+            if gs.a_time == 0:
+                gs.a_time = gs.player.get_time()
+                gs.ab_status="A-"
+        elif char == 'b':
+            if gs.a_time != 0 and gs.b_time == 0:
+                gs.b_time = gs.player.get_time()
+                if gs.b_time <= gs.a_time:
+                    gs.b_time = 0
+                else:
+                    gs.ab_status="AB"
+        elif char == 'c':
+            gs.a_time = 0
+            gs.b_time = 0
+            gs.ab_status="  "
+        elif char == 'd':
+            if gs.a_time:
+                gs.b_time = 0
+                gs.ab_status="A-"
         elif char == '?':
             showHelp()
         else:
@@ -315,6 +348,7 @@ while gs.curr_file_n < len(gs.files) and gs.running:
     set_volume(gs, gs.curr_volume)
     while gs.song_playing and gs.running:
         print_current_status(gs)
+        check_ab(gs)
 
         fd = sys.stdin.fileno()
         old_settings = termios.tcgetattr(fd)
