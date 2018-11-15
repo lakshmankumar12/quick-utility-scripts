@@ -56,5 +56,7 @@ else
   tmux send-keys -t "ppl" "vi" "C-m"
   tmux send-keys -t "free-term" "C-m"
 
+  tmux new-session -d -s second
+
   tmux -2 attach -d -t mac-main
 fi

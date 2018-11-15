@@ -119,6 +119,7 @@ helpString=\
     a/b      -> Set a & b points.
     c        -> clear both a/b.
     d        -> clear just b
+    t        -> Show tags of current file
 '''
 def showHelp():
     print (helpString)
@@ -189,6 +190,8 @@ def process_char(gs, char):
             if gs.a_time:
                 gs.b_time = 0
                 gs.ab_status="A-"
+        elif char == 't':
+            showTags(gs)
         elif char == '?':
             showHelp()
         else:
@@ -200,7 +203,6 @@ def process_char(gs, char):
                 print ("\ncurrent volume is {}".format(get_volume(gs)))
             elif char == 'p':
                 dump_playlist(gs)
-                print ("\nCurrent playlist dumped")
             else:
                 pass
         elif gs.user_in_so_far[0] == 'v' or gs.user_in_so_far[0] == 's':
@@ -249,6 +251,18 @@ def dump_playlist(gs):
             except:
                 pass
             print ("{:1s}{:4d}|{:50.50s}|{:50.50s}|{:50.50s}|{:s}".format(curr,n,tit,art,alb,f), file=fd)
+    print ("\nCurrent playlist dumped in {}".format(gs.dumpfile))
+
+def showTags(gs):
+    try:
+        curr_file_name = gs.files[gs.curr_file_n]
+        abspath = os.path.abspath(gs.files[gs.curr_file_n])
+        tags=mutagen.id3.ID3(curr_file_name, v2_version=3)
+        print("\nPath: {}\nTitle: {}\nAlbum: {}\nArtist: {}\nAlbum-Artist: {}".format(
+              abspath, tags['TIT2'], tags['TALB'], tags['TPE1'], tags['TPE2']))
+    except:
+        print("\nException on getting info for current")
+
 
 def initialize_udp_command_listener(gs, cmd_options):
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
