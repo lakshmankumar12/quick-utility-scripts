@@ -18,7 +18,6 @@ if [ $1 == "-k" ] ; then
   tmux send-keys -t "mp3" Escape ":qa" "C-m"
   tmux send-keys -t "mac-script" Escape ":qa" "C-m"
   tmux send-keys -t "ppl" Escape ":qa" "C-m"
-  tmux send-keys -t "free-term" Escape ":qa" "C-m"
 
 else
 
@@ -38,7 +37,6 @@ else
   tmux new-window -d -t 11 -n "mp3" -c "$HOME/github/mp3_tag_editor"
   tmux new-window -d -t 12 -n "mac-script" -c "$HOME/github/mac_scripts"
   tmux new-window -d -t 13 -n "ppl" -c "$HOME/gitlab/office-api-try/python3-connect-rest-sample"
-  tmux new-window -d -t 14 -n "free-term" -c "$HOME"
 
   tmux send-keys -t "mac-notes" "vi" "C-m"
   tmux send-keys -t "what" "vi" "C-m"
@@ -54,7 +52,6 @@ else
   tmux send-keys -t "mp3" "vi" "C-m"
   tmux send-keys -t "mac-script" "vi" "C-m"
   tmux send-keys -t "ppl" "vi" "C-m"
-  tmux send-keys -t "free-term" "C-m"
 
   tmux new-session -d -s second
 

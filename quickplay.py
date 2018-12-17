@@ -355,6 +355,16 @@ while gs.curr_file_n < len(gs.files) and gs.running:
     r = gs.player.play()
     gs.play_pause = 1
     gs.song_playing = 1
+    wait_to_start = 0.75
+    while wait_to_start >= 0:
+        if not gs.player.is_playing():
+            sleep(0.25)
+            wait_to_start -= 0.25
+        else:
+            break
+    if not gs.player.is_playing():
+        print ("Player hasn't started playing even after waiting 0.75 seconds")
+        sys.exit(1)
     if r != 0:
         print ("Trouble in playing file {}".format(f))
         gs.curr_file_n += 1
