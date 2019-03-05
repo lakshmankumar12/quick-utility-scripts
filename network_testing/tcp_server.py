@@ -7,6 +7,7 @@
 
 from twisted.internet.protocol import Protocol, Factory
 from twisted.internet import reactor
+from twisted.internet.protocol import DatagramProtocol
 
 import argparse
 import sys
@@ -20,6 +21,10 @@ class Echo(Protocol):
         As soon as any data is received, write it back.
         """
         self.transport.write(data)
+
+class EchoUDP(DatagramProtocol):
+    def datagramReceived(self, datagram, address):
+        self.transport.write(datagram, address)
 
 def parse_options():
     parser = argparse.ArgumentParser()
@@ -37,6 +42,7 @@ def main():
     f = Factory()
     f.protocol = Echo
     reactor.listenTCP(opts.localport, f, interface=opts.localip)
+    reactor.listenUDP(opts.localport, EchoUDP(), interface=opts.localip)
     reactor.run()
 
 if __name__ == '__main__':

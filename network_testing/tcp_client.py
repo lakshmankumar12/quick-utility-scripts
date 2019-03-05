@@ -106,7 +106,7 @@ def parse_options():
     parser.add_argument("-p","--serverport", help="serverport", type=int)
     parser.add_argument("-c","--count",      help="noofclients", type=int, default=1)
     parser.add_argument("-n","--transactions", help="no of transactions for each client", type=int, default=3)
-    parser.add_argument("-t","--timeout",    help="timeout between each client in seconds", type=float, default=0)
+    parser.add_argument("-t","--timeout",    help="timeout between each txn in seconds", type=float, default=0)
     cmd_options = parser.parse_args()
     if not cmd_options.localip or not cmd_options.serverport or not cmd_options.serverip:
         print ("you should supply local-ip, serverip and server-port")
