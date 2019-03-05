@@ -19,8 +19,9 @@ class EchoClient(LineReceiver):
     end = b"Bye-bye!"
 
     def connectionMade(self):
-        self.sendLine(b"Hello, world!")
-        self.sendLine(b"What a fine day it is.")
+        for i in range(self.factory.opts.transactions):
+            tosend = "This is line:{}".format(i)
+            self.sendLine(bytes(tosend, 'utf-8'))
         self.sendLine(self.end)
 
 
@@ -34,8 +35,9 @@ class EchoClient(LineReceiver):
 class EchoClientFactory(ClientFactory):
     protocol = EchoClient
 
-    def __init__(self):
+    def __init__(self, opts):
         self.done = Deferred()
+        self.opts = opts
 
 
     def clientConnectionFailed(self, connector, reason):
@@ -53,6 +55,8 @@ def parse_options():
     parser.add_argument("-l","--localip",   help="localip")
     parser.add_argument("-s","--serverip",  help="serverip")
     parser.add_argument("-p","--serverport", help="serverport", type=int)
+    parser.add_argument("-c","--count",      help="noofclients", type=int, default=1)
+    parser.add_argument("-t","--transactions", help="no of transactions for each client", type=int, default=3)
     cmd_options = parser.parse_args()
     if not cmd_options.localip or not cmd_options.serverport or not cmd_options.serverip:
         print ("you should supply local-ip, serverip and server-port")
@@ -62,7 +66,7 @@ def parse_options():
 
 def main(reactor):
     opts= parse_options()
-    factory = EchoClientFactory()
+    factory = EchoClientFactory(opts)
     reactor.connectTCP(opts.serverip, opts.serverport, factory, bindAddress=(opts.localip,0))
     return factory.done
 
