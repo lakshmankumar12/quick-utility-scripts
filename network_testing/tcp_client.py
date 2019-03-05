@@ -18,6 +18,9 @@ import sys
 def echoClientCallback(arg):
     arg.initiate_a_transaction()
 
+def batchCallBack(arg):
+    arg.start_a_batch()
+
 class EchoClient(LineReceiver):
 
     def __init__(self):
@@ -28,7 +31,6 @@ class EchoClient(LineReceiver):
     def postFactorySetInit(self):
         self.myinstance=next(self.factory.counter)
         self.inited=1
-        self.factory.clients_created += 1
         self.transactions_done = 0
 
     def connectionMade(self):
@@ -78,6 +80,10 @@ class EchoClientFactory(ClientFactory):
         self.clients_completed = 0
         self.errored = 0
         self.errorReason = None
+        if opts.baseport:
+            self.localport = opts.baseport
+        else:
+            self.localport = 0
 
     def clientConnectionFailed(self, connector, reason):
         self.clients_completed+=1
@@ -90,13 +96,22 @@ class EchoClientFactory(ClientFactory):
         self.maybeDone()
 
     def maybeDone(self):
-        if self.clients_completed == self.clients_created:
-            if self.errored:
-                self.done.errback(reason)
-            else:
-                print ("All clients done")
-                self.done.callback(None)
+        if self.clients_created >= self.opts.count:
+            if self.clients_completed == self.clients_created:
+                if self.errored:
+                    self.done.errback(reason)
+                else:
+                    print ("All clients done")
+                    self.done.callback(None)
 
+    def start_a_batch(self):
+        self.clients_created += self.opts.batch
+        for i in range(self.opts.batch):
+            reactor.connectTCP(self.opts.serverip, self.opts.serverport, self, bindAddress=(self.opts.localip,self.localport))
+            if self.localport:
+                self.localport+=1
+        if self.clients_created < self.opts.count:
+            reactor.callLater(self.opts.batch_timeout, batchCallBack, self)
 
 def parse_options():
     parser = argparse.ArgumentParser()
@@ -105,25 +120,23 @@ def parse_options():
     parser.add_argument("-s","--serverip",   help="serverip")
     parser.add_argument("-p","--serverport", help="serverport", type=int)
     parser.add_argument("-c","--count",      help="noofclients", type=int, default=1)
-    parser.add_argument("-n","--transactions", help="no of transactions for each client", type=int, default=3)
+    parser.add_argument("-B","--batch",      help="noofclients-in-one-batch", type=int, default=1)
+    parser.add_argument("-T","--batch-timeout", help="timeout between batches", type=float, default=1)
+    parser.add_argument("-n","--transactions",  help="no of transactions for each client", type=int, default=3)
     parser.add_argument("-t","--timeout",    help="timeout between each txn in seconds", type=float, default=0)
     cmd_options = parser.parse_args()
     if not cmd_options.localip or not cmd_options.serverport or not cmd_options.serverip:
         print ("you should supply local-ip, serverip and server-port")
         parser.print_help()
         sys.exit(1)
+    if cmd_options.batch == 0:
+        cmd_options.batch = cmd_options.count
     return cmd_options
 
 def main(reactor):
     opts= parse_options()
     factory = EchoClientFactory(opts)
-    port = 0
-    if opts.baseport:
-        port = opts.baseport
-    for i in range(opts.count):
-        reactor.connectTCP(opts.serverip, opts.serverport, factory, bindAddress=(opts.localip,port))
-        if opts.baseport:
-            port+=1
+    factory.start_a_batch()
     return factory.done
 
 if __name__ == '__main__':
