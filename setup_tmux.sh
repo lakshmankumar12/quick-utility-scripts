@@ -2,7 +2,7 @@
 
 export TERM=screen-256color-bce
 
-if [ $1 == "-k" ] ; then
+if [ "x$1" == "x-k" ] ; then
 
   tmux send-keys -t "mac-notes" Escape ":qa" "C-m"
   tmux send-keys -t "what" Escape ":qa" "C-m"
