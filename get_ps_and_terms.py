@@ -24,6 +24,7 @@ class MyProcess:
         self.pid = p.pid
         self.ppid = p.ppid()
         self.tty = p.terminal()
+        self.user = p.username()
         if self.ppid == 0:
             if not root:
                 root = self
@@ -60,7 +61,10 @@ def print_hierarchy(myp, cmd_options, indentLevel):
     if cmd_options.pidPat:
         if cmd_options.pidPat.search(pid):
             pid = Fore.YELLOW + pid + Style.RESET_ALL
-    print ("{}{}:{} --> {}{}".format(indentString*indentLevel, myp.pid, pid, highlight_term, myp.tty))
+    user = ""
+    if cmd_options.user:
+        user = " {}".format(myp.user)
+    print ("{}{}:{} --> {}{}{}".format(indentString*indentLevel, pid, name, highlight_term, myp.tty, user))
     for i in myp.children:
         print_hierarchy(i, cmd_options, indentLevel+1)
 
@@ -71,6 +75,7 @@ def main():
     parser.add_argument("--grephighlight", "-g",  help="process to highlight")
     parser.add_argument("--pidhighlight", "-p",  help="pid to highlight")
     parser.add_argument("--tmuxserver", "-t",  help="process to highlight", action="store_true")
+    parser.add_argument("--user", "-u",  help="also print username", action="store_true")
     parser.add_argument("pid",   help="pid to start", nargs="?", type=int, default=1)
     cmd_options = parser.parse_args()
 
@@ -79,7 +84,7 @@ def main():
     else:
         setattr(cmd_options, "grepPat", None)
 
-    if cmd_options.grephighlight:
+    if cmd_options.pidhighlight:
         setattr(cmd_options, "pidPat", re.compile(cmd_options.pidhighlight))
     else:
         setattr(cmd_options, "pidPat", None)
