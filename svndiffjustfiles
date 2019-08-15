@@ -6,6 +6,8 @@ prefix=""
 if [ -f .branch_name ] ; then
   prefix="$(cat .branch_name)"
   cd $prefix
+elif [ -n "$SVNBRANCH" ] ; then
+  cd $SVNBRANCH
 fi
 
-svn diff | grep Index: | awk -v p=$prefix '{print p "/" $2}'
+svn diff | grep -E '^Index:' | awk -v p=$prefix '{print p "/" $2}'

@@ -32,7 +32,7 @@ $GNU_SED -r -e '/^<<<<<<< /,/^=======\r?$/d' -e '/^>>>>>>> /d' "${MERGED}" > "${
 $GNU_SED -r -e '/^=======\r?$/,/^>>>>>>> /d' -e '/^<<<<<<< /d' "${MERGED}" > "${RCONFL}"
 
 # Fire up vimdiff
-$HOME/bin/nvim -f -R -d "${LCONFL}" "${RCONFL}" -c ":set noro"
+nvim -f -R -d "${LCONFL}" "${RCONFL}" -c ":set noro"
 
 EC=$?
 

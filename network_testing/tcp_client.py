@@ -100,7 +100,7 @@ class EchoClientFactory(ClientFactory):
         if self.clients_created >= self.opts.count:
             if self.clients_completed == self.clients_created:
                 if self.errored:
-                    self.done.errback(reason)
+                    self.done.errback(self.errorReason)
                 else:
                     print ("All clients done")
                     self.done.callback(None)
