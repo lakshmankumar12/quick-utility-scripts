@@ -121,7 +121,7 @@ class Manager():
         if message:
             print(message)
         self.stopSniffing()
-        print ("isn={}  ; iack={} ; sport={} ; dport={}".format(conn.myseq,conn.ack,conn.src_port,conn.dst_port))
+        print ("isn={}  ; iack={} ; sport={} ; dport={}".format(conn.myseq,conn.peerseq,conn.src_port,conn.dst_port))
         sys.exit(1)
 
     def run_main_loop(self):
@@ -241,13 +241,13 @@ class Connection():
         else:
             self.myseq = args.isn
         if args.iack == -1:
-            self.ack = 0
+            self.peerseq = 0
         else:
-            self.ack = args.iack
+            self.peerseq = args.iack
 
         self.seqstart = self.myseq
         self.peer_acked = self.myseq
-        self.peerseqstart = self.ack
+        self.peerseqstart = self.peerseq
 
         if args.source_port == -1:
             self.src_port = random.randrange(32768,61000)
@@ -283,7 +283,7 @@ class Connection():
         connection  = "Src-IP/Dest-IP:      {}/{}\n".format(self.src_ip,self.dst_ip)
         connection += "Src-Port/Dst-Port:   {}/{}\n".format(self.src_port,self.dst_port)
         connection += "Intf:                {}\n".format(self.interface)
-        connection += "Seq/Ack:             {}/{}\n".format(self.myseq, self.ack)
+        connection += "Seq/Ack:             {}/{}\n".format(self.myseq, self.peerseq)
         connection += "Tcp-Option:          {}\n".format(self.tcp_options)
         connection += "TimeStamps:          {}\n".format(self.timestamps)
         return connection
@@ -296,17 +296,17 @@ class Connection():
     def update_my_ack_with_peer_data(self, peer_pkt):
         to_send_ack = False
         if peer_pkt.haslayer(Raw):
-            if peer_pkt[TCP].seq <= self.ack:
-                self.ack = peer_pkt[TCP].seq + len(peer_pkt[Raw].load)
+            if peer_pkt[TCP].seq <= self.peerseq:
+                self.peerseq = peer_pkt[TCP].seq + len(peer_pkt[Raw].load)
                 to_send_ack = True
-                print("Setting my-ack to {}".format(self.ack - self.peerseqstart))
+                print("Setting my-ack to {}".format(self.peerseq - self.peerseqstart))
         if 'F' in peer_pkt[TCP].flags:
             if self.state.check(TcpState.ESTABLISHED) or \
                     self.state.check(TcpState.FIN_WAIT1) or \
                     self.state.check(TcpState.FIN_WAIT2):
-                self.ack += 1
+                self.peerseq += 1
                 to_send_ack = True
-                print("Got Fin. Setting my-ack to {}".format(self.ack - self.peerseqstart))
+                print("Got Fin. Setting my-ack to {}".format(self.peerseq - self.peerseqstart))
         return to_send_ack
 
     def update_peer_ack(self, peer_pkt):
@@ -322,7 +322,7 @@ class Connection():
         src_port = self.src_port
         dst_port = self.dst_port
         seq = self.myseq
-        ack = self.ack
+        ack = self.peerseq
         rwin = self.rwin
         tcp_options = self.tcp_options
         timestamps = self.timestamps
@@ -370,7 +370,7 @@ class Connection():
 
         print("Got syn-ack")
         self.peerseqstart = pkt[TCP].seq
-        self.ack = pkt[TCP].seq + 1
+        self.peerseq = pkt[TCP].seq + 1
         self.peer_acked = pkt[TCP].ack
         self.state.update(TcpState.ESTABLISHED)
 
@@ -421,7 +421,7 @@ class Connection():
 
         print ("Got a syn pkt")
         self.peerseqstart = pkt[TCP].seq
-        self.ack = pkt[TCP].seq + 1
+        self.peerseq = pkt[TCP].seq + 1
         self.peer_acked = self.seqstart
         self.state.update(TcpState.ESTABLISHED)
         self.dst_port = pkt[TCP].sport
