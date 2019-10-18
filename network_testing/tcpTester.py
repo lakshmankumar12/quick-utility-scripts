@@ -15,6 +15,7 @@ import sys
 import argparse
 import threading
 import queue
+import tty, termios
 
 def sanitise_args(parser, options):
 
@@ -102,12 +103,13 @@ class Manager():
         self.ifc=conn.interface
         self.snifferthr = threading.Thread(target=self.background_sniffer_thread)
         self.snifferthr.start()
+        self.connections = []
+        self.connections.append(conn)
 
     def getNextPacket(self, timeout=3):
         try:
             pkt = self.pktQueue.get(timeout=timeout)
         except queue.Empty:
-            print ("no pkt for {} seconds".format(timeout))
             return None
         return pkt
 
@@ -121,6 +123,44 @@ class Manager():
         self.stopSniffing()
         print ("isn={}  ; iack={} ; dport={}".format(conn.seq,conn.ack,conn.dst_port))
         sys.exit(1)
+
+    def run_main_loop(self):
+        print ("Running main_loop: Type '?' for help")
+        while self.keep_sniffing:
+            fd = sys.stdin.fileno()
+            old_settings = termios.tcgetattr(fd)
+            char = None
+            try:
+                tty.setraw(sys.stdin.fileno())
+                i, o, e = select.select( [sys.stdin], [], [], 0.25)
+                for f in i:
+                    if f == sys.stdin:
+                        char = sys.stdin.read(1)
+            finally:
+                termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+            pkt = self.getNextPacket(timeout=1)
+            if pkt:
+                self.connections[0].process_a_packet(pkt)
+            if char:
+                self.process_char(char)
+
+    def print_help(self):
+        self.helpString=\
+        '''Keys:
+            q        -> exit
+            ?        -> show this help
+            f        -> send fin
+        '''
+        print (self.helpString)
+
+    def process_char(self, char):
+        if char == 'q':
+            self.abort("user requested exit")
+        elif char == '?':
+            self.print_help()
+        elif char == 'f':
+            self.connections[0].send_fin()
+
 
 class TcpState:
     CLOSED = 0
@@ -414,13 +454,16 @@ class Connection():
             ack = self.packet_constructor('A')
             send(self.ip/ack, verbose=0)
 
-    def process_a_packet(self, mustGet=True, timeout=3):
+    def get_a_packet_and_process(self, mustGet=True, timeout=3):
         pkt = mgr.getNextPacket(timeout=timeout)
         if not pkt:
             if mustGet:
                 mgr.abort("No pkt received")
             else:
                 return None
+        self.process_a_packet(pkt)
+
+    def process_a_packet(self, pkt):
 
         self.pkt_printer(pkt)
 
@@ -472,17 +515,18 @@ if __name__ == "__main__":
     elif args.start_client:
         conn.start_client_handshake()
         print ("Done with 3wHS")
+        mgr.run_main_loop()
         discard = input("Enter a new line to continue:")
-        conn.process_a_packet(mustGet=False, timeout=1)
+        conn.get_a_packet_and_process(mustGet=False, timeout=1)
         conn.send_data(data="happy")
-        conn.process_a_packet()
+        conn.get_a_packet_and_process()
         conn.send_fin()
-        conn.process_a_packet()
+        conn.get_a_packet_and_process()
         fin_wait_attempts = 0
         fin_wait_max_attempts = 3
         while fin_wait_attempts < fin_wait_max_attempts:
             if not conn.is_peer_fin_received():
-                conn.process_a_packet()
+                conn.get_a_packet_and_process()
             else:
                 break
         if fin_wait_attempts >= fin_wait_max_attempts:
@@ -491,10 +535,10 @@ if __name__ == "__main__":
     elif args.start_server:
         conn.wait_for_syn()
         while True:
-            conn.process_a_packet(mustGet=False)
+            conn.get_a_packet_and_process(mustGet=False)
             if conn.is_peer_fin_received():
                 print("Sending Fin-Ack")
                 conn.send_fin()
                 print("Waiting for LAST_ACK")
-                conn.process_a_packet()
+                conn.get_a_packet_and_process()
                 mgr.abort()
