@@ -121,7 +121,7 @@ class Manager():
         if message:
             print(message)
         self.stopSniffing()
-        print ("isn={}  ; iack={} ; dport={}".format(conn.seq,conn.ack,conn.dst_port))
+        print ("isn={}  ; iack={} ; sport={} ; dport={}".format(conn.myseq,conn.ack,conn.src_port,conn.dst_port))
         sys.exit(1)
 
     def run_main_loop(self):
@@ -138,11 +138,14 @@ class Manager():
                         char = sys.stdin.read(1)
             finally:
                 termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-            pkt = self.getNextPacket(timeout=1)
-            if pkt:
-                self.connections[0].process_a_packet(pkt)
             if char:
                 self.process_char(char)
+            while True:
+                pkt = self.getNextPacket(timeout=0.01)
+                if pkt:
+                    self.connections[0].process_a_packet(pkt)
+                else:
+                    break
 
     def print_help(self):
         self.helpString=\
@@ -159,6 +162,7 @@ class Manager():
         elif char == '?':
             self.print_help()
         elif char == 'f':
+            print ("Initiating a fin")
             self.connections[0].send_fin()
 
 
@@ -233,16 +237,16 @@ class Connection():
 
         self.rwin = args.rwin
         if args.isn == -1:
-            self.seq = random.getrandbits(32)
+            self.myseq = random.getrandbits(32)
         else:
-            self.seq = args.isn
+            self.myseq = args.isn
         if args.iack == -1:
             self.ack = 0
         else:
             self.ack = args.iack
 
-        self.seqstart = self.seq
-        self.peer_acked = self.seq
+        self.seqstart = self.myseq
+        self.peer_acked = self.myseq
         self.peerseqstart = self.ack
 
         if args.source_port == -1:
@@ -279,7 +283,7 @@ class Connection():
         connection  = "Src-IP/Dest-IP:      {}/{}\n".format(self.src_ip,self.dst_ip)
         connection += "Src-Port/Dst-Port:   {}/{}\n".format(self.src_port,self.dst_port)
         connection += "Intf:                {}\n".format(self.interface)
-        connection += "Seq/Ack:             {}/{}\n".format(self.seq, self.ack)
+        connection += "Seq/Ack:             {}/{}\n".format(self.myseq, self.ack)
         connection += "Tcp-Option:          {}\n".format(self.tcp_options)
         connection += "TimeStamps:          {}\n".format(self.timestamps)
         return connection
@@ -317,7 +321,7 @@ class Connection():
         dst_ip = self.dst_ip
         src_port = self.src_port
         dst_port = self.dst_port
-        seq = self.seq
+        seq = self.myseq
         ack = self.ack
         rwin = self.rwin
         tcp_options = self.tcp_options
@@ -329,13 +333,13 @@ class Connection():
             packet = TCP(sport=src_port, dport=dst_port, flags='S', seq=seq,
                          window=rwin, options=tcp_options)
             if self.state.check(TcpState.CLOSED):
-                self.seq += 1
+                self.myseq += 1
         else:
             packet = TCP(sport=src_port, dport=dst_port, flags=packet_flags,
                          seq=seq, ack=ack, window=rwin, options=timestamps)
             if len(load_data):
                 packet = packet/Raw(load=load_data)
-                conn.seq += len(packet[Raw].load)
+                self.myseq += len(packet[Raw].load)
 
         return packet
 
@@ -386,7 +390,7 @@ class Connection():
 
         fin = self.packet_constructor('FA')
         send((self.ip/fin), verbose=0)
-        self.seq += 1
+        self.myseq += 1
         self.state.update(next_state)
 
     def send_data(self, data):
@@ -424,7 +428,7 @@ class Connection():
 
         synack = self.packet_constructor('SA')
         send(self.ip/synack, verbose=0)
-        self.seq += 1
+        self.myseq += 1
 
         while True:
             pkt = mgr.getNextPacket(timeout=5)
@@ -472,14 +476,14 @@ class Connection():
         if 'A' in pkt[TCP].flags:
             self.update_peer_ack(pkt)
             if self.state.check(TcpState.FIN_WAIT1):
-                if self.peer_acked == self.seq:
+                if self.peer_acked == self.myseq:
                     self.state.update(TcpState.FIN_WAIT2)
                 else:
                     print("Peer yet to ack fin: my-seq:{}, peer_acked:{}".format(
-                                        self.seq - self.seqstart,
+                                        self.myseq - self.seqstart,
                                         self.peer_acked - self.seqstart))
             elif self.state.check(TcpState.CLOSING):
-                if self.peer_acked == self.seq:
+                if self.peer_acked == self.myseq:
                     self.state.update(TcpState.TIME_WAIT)
 
         if 'F' in pkt[TCP].flags:
