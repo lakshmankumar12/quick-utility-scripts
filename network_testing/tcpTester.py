@@ -106,9 +106,9 @@ class Manager():
         self.connections = []
         self.connections.append(conn)
 
-    def getNextPacket(self, timeout=3):
+    def getNextPacket(self, timeout=3, block=True):
         try:
-            pkt = self.pktQueue.get(timeout=timeout)
+            pkt = self.pktQueue.get(block=block, timeout=timeout)
         except queue.Empty:
             return None
         return pkt
@@ -141,11 +141,12 @@ class Manager():
             if char:
                 self.process_char(char)
             while True:
-                pkt = self.getNextPacket(timeout=0.01)
+                pkt = self.getNextPacket(block=False)
                 if pkt:
                     self.connections[0].process_a_packet(pkt)
                 else:
                     break
+            self.connections[0].connection_maintenance()
 
     def print_help(self):
         self.helpString=\
@@ -153,6 +154,7 @@ class Manager():
             q        -> exit
             ?        -> show this help
             f        -> send fin
+            d        -> send data
         '''
         print (self.helpString)
 
@@ -164,6 +166,9 @@ class Manager():
         elif char == 'f':
             print ("Initiating a fin")
             self.connections[0].send_fin()
+        elif char == 'd':
+            print ("sending data")
+            self.connections[0].send_data(data="happy")
 
 
 class TcpState:
@@ -230,6 +235,7 @@ class Connection():
 
     def __init__(self, args):
         self.state = TcpState()
+        self.conn_dead = False
         self.src_ip = args.source_ip
         self.dst_ip = args.destination_ip
         self.dst_port = args.destination_port
@@ -295,11 +301,17 @@ class Connection():
 
     def update_my_ack_with_peer_data(self, peer_pkt):
         to_send_ack = False
+
+        #are we receiving without holes?
+        # TODO
+
         if peer_pkt.haslayer(Raw):
             if peer_pkt[TCP].seq <= self.peerseq:
-                self.peerseq = peer_pkt[TCP].seq + len(peer_pkt[Raw].load)
-                to_send_ack = True
-                print("Setting my-ack to {}".format(self.peerseq - self.peerseqstart))
+                if peer_pkt[TCP].seq + len(peer_pkt[Raw].load) > self.peerseq:
+                    old_ack = self.peerseq - self.peerseqstart
+                    self.peerseq = peer_pkt[TCP].seq + len(peer_pkt[Raw].load)
+                    print("Got new data. Setting my-ack from {} to {}".format(old_ack, self.peerseq - self.peerseqstart))
+            to_send_ack = True
         if 'F' in peer_pkt[TCP].flags:
             if self.state.check(TcpState.ESTABLISHED) or \
                     self.state.check(TcpState.FIN_WAIT1) or \
@@ -313,7 +325,7 @@ class Connection():
         if peer_pkt[TCP].ack > self.peer_acked:
             #some new ack.
             self.peer_acked = peer_pkt[TCP].ack
-            print("Got peer-ack to {}".format(self.peer_acked - self.seqstart))
+            print("Got peer-ack to {}. My seq: {}".format(self.peer_acked - self.seqstart, self.myseq-self.seqstart))
 
 
     def packet_constructor(self, packet_flags, load_data=""):
@@ -339,7 +351,9 @@ class Connection():
                          seq=seq, ack=ack, window=rwin, options=timestamps)
             if len(load_data):
                 packet = packet/Raw(load=load_data)
+                oldseq = self.myseq - self.seqstart
                 self.myseq += len(packet[Raw].load)
+                print ("Moving my seq from {} to {}".format(oldseq, self.myseq - self.seqstart))
 
         return packet
 
@@ -507,6 +521,16 @@ class Connection():
             return True
         return False
 
+    def connection_maintenance(self):
+        if self.state.check(TcpState.CLOSE_WAIT):
+            print ("We got a fin. Responding with a fin")
+            self.send_fin()
+        elif self.state.check(TcpState.LAST_ACK):
+            if not self.conn_dead:
+                self.conn_dead=True
+                print ("Done with a server connection")
+
+
 if __name__ == "__main__":
     args = get_args()
     conn = Connection(args)
@@ -520,29 +544,6 @@ if __name__ == "__main__":
         conn.start_client_handshake()
         print ("Done with 3wHS")
         mgr.run_main_loop()
-        discard = input("Enter a new line to continue:")
-        conn.get_a_packet_and_process(mustGet=False, timeout=1)
-        conn.send_data(data="happy")
-        conn.get_a_packet_and_process()
-        conn.send_fin()
-        conn.get_a_packet_and_process()
-        fin_wait_attempts = 0
-        fin_wait_max_attempts = 3
-        while fin_wait_attempts < fin_wait_max_attempts:
-            if not conn.is_peer_fin_received():
-                conn.get_a_packet_and_process()
-            else:
-                break
-        if fin_wait_attempts >= fin_wait_max_attempts:
-            print("Giving up on peer fin")
-        mgr.abort()
     elif args.start_server:
         conn.wait_for_syn()
-        while True:
-            conn.get_a_packet_and_process(mustGet=False)
-            if conn.is_peer_fin_received():
-                print("Sending Fin-Ack")
-                conn.send_fin()
-                print("Waiting for LAST_ACK")
-                conn.get_a_packet_and_process()
-                mgr.abort()
+        mgr.run_main_loop()
