@@ -155,6 +155,7 @@ class Manager():
             ?        -> show this help
             f        -> send fin
             d        -> send data
+            R        -> send Reset
         '''
         print (self.helpString)
 
@@ -169,6 +170,9 @@ class Manager():
         elif char == 'd':
             print ("sending data")
             self.connections[0].send_data(data="happy")
+        elif char == 'R':
+            print ("sending reset")
+            self.connections[0].send_tcp_reset()
 
 
 class TcpState:
@@ -361,6 +365,8 @@ class Connection():
         print("Sending TCP Reset")
         rst = self.packet_constructor('R')
         send(self.ip/rst, verbose=0)
+        self.state.update(TcpState.CLOSED)
+        self.conn_dead = True
 
     def start_client_handshake(self):
         if not self.state.check(TcpState.CLOSED):
@@ -484,6 +490,12 @@ class Connection():
     def process_a_packet(self, pkt):
 
         self.pkt_printer(pkt)
+
+        if 'R' in pkt[TCP].flags:
+            print("Received a peer reset")
+            self.state.update(TcpState.CLOSED)
+            self.conn_dead = True
+            return
 
         to_send_ack = self.update_my_ack_with_peer_data(pkt)
 
