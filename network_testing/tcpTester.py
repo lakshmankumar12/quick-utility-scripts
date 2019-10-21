@@ -158,6 +158,7 @@ class Manager():
             R        -> send Reset
             s        -> print connection state details
             h        -> toggle half-close flag (whether to respond to fin or not with a fin)
+            z        -> zero/un-zero receive win
         '''
         print (self.helpString)
 
@@ -181,7 +182,13 @@ class Manager():
         elif char == 'h':
             self.connections[0].maintain_half_close = 1 - self.connections[0].maintain_half_close
             print("Connection maintain_half_close is now %d"%self.connections[0].maintain_half_close)
-
+        elif char == 'z':
+            if self.connections[0].rwin:
+                self.connections[0].rwin = 0
+            else:
+                self.connections[0].rwin = self.connections[0].orig_rwin
+            print("Connection rwin is now %d"%self.connections[0].rwin)
+            self.connections[0].send_ack()
 
 class TcpState:
     CLOSED = 0
@@ -254,6 +261,7 @@ class Connection():
         self.interface = args.source_interface
         self.maintain_half_close = 0
 
+        self.orig_rwin = args.rwin
         self.rwin = args.rwin
         if args.isn == -1:
             self.myseq = random.getrandbits(32)
@@ -431,6 +439,10 @@ class Connection():
             return
         data_pkt = self.packet_constructor('A',load_data=data)
         send((self.ip/data_pkt), verbose=0)
+
+    def send_ack(self):
+        ack = self.packet_constructor('A')
+        send(self.ip/ack, verbose=0)
 
     def wait_for_syn(self):
         if not self.state.check(TcpState.CLOSED):
