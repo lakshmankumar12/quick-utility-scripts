@@ -157,6 +157,7 @@ class Manager():
             d        -> send data
             R        -> send Reset
             s        -> print connection state details
+            h        -> toggle half-close flag (whether to respond to fin or not with a fin)
         '''
         print (self.helpString)
 
@@ -177,6 +178,9 @@ class Manager():
         elif char == 's':
             print ("sending reset")
             print("%s"%self.connections[0])
+        elif char == 'h':
+            self.connections[0].maintain_half_close = 1 - self.connections[0].maintain_half_close
+            print("Connection maintain_half_close is now %d"%self.connections[0].maintain_half_close)
 
 
 class TcpState:
@@ -248,6 +252,7 @@ class Connection():
         self.dst_ip = args.destination_ip
         self.dst_port = args.destination_port
         self.interface = args.source_interface
+        self.maintain_half_close = 0
 
         self.rwin = args.rwin
         if args.isn == -1:
@@ -301,6 +306,7 @@ class Connection():
         connection += "Tcp-Option:          {}\n".format(self.tcp_options)
         connection += "TimeStamps:          {}\n".format(self.timestamps)
         connection += "State:               {}\n".format(self.state)
+        connection += "Half-close flag:     {}\n".format(self.maintain_half_close)
         return connection
 
     def pkt_printer(self, pkt):
@@ -540,8 +546,9 @@ class Connection():
 
     def connection_maintenance(self):
         if self.state.check(TcpState.CLOSE_WAIT):
-            print ("We got a fin. Responding with a fin")
-            self.send_fin()
+            if self.maintain_half_close == 0:
+                print ("We got a fin. Responding with a fin")
+                self.send_fin()
         elif self.state.check(TcpState.LAST_ACK):
             if not self.conn_dead:
                 self.conn_dead=True
