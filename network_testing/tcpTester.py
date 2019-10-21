@@ -156,6 +156,7 @@ class Manager():
             f        -> send fin
             d        -> send data
             R        -> send Reset
+            s        -> print connection state details
         '''
         print (self.helpString)
 
@@ -173,6 +174,9 @@ class Manager():
         elif char == 'R':
             print ("sending reset")
             self.connections[0].send_tcp_reset()
+        elif char == 's':
+            print ("sending reset")
+            print("%s"%self.connections[0])
 
 
 class TcpState:
@@ -293,9 +297,10 @@ class Connection():
         connection  = "Src-IP/Dest-IP:      {}/{}\n".format(self.src_ip,self.dst_ip)
         connection += "Src-Port/Dst-Port:   {}/{}\n".format(self.src_port,self.dst_port)
         connection += "Intf:                {}\n".format(self.interface)
-        connection += "Seq/Ack:             {}/{}\n".format(self.myseq, self.peerseq)
+        connection += "Seq/Ack,  Seq/Peer-acked/me-acked:   {}/{}   {}/{}/{}\n".format(self.myseq, self.peerseq,  self.myseq-self.seqstart, self.peer_acked-self.seqstart, self.peerseq-self.peerseqstart)
         connection += "Tcp-Option:          {}\n".format(self.tcp_options)
         connection += "TimeStamps:          {}\n".format(self.timestamps)
+        connection += "State:               {}\n".format(self.state)
         return connection
 
     def pkt_printer(self, pkt):
