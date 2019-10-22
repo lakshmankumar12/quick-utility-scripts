@@ -161,6 +161,7 @@ class Manager():
             z        -> zero/un-zero receive win
             a        -> send a ack now
             A        -> toggle supress-ack
+            j        -> toggle jumbo-data flag
         '''
         print (self.helpString)
 
@@ -174,7 +175,7 @@ class Manager():
             self.connections[0].send_fin()
         elif char == 'd':
             print ("sending data")
-            self.connections[0].send_data(data="happy")
+            self.connections[0].send_data()
         elif char == 'R':
             print ("sending reset")
             self.connections[0].send_tcp_reset()
@@ -199,6 +200,9 @@ class Manager():
             print("Suppress ack is now %d"%self.connections[0].supress_acks)
             if not self.connections[0].supress_acks:
                 self.connections[0].send_ack()
+        elif char == 'j':
+            self.connections[0].send_jumbo_data = 1 - self.connections[0].send_jumbo_data
+            print("Send Jumbo Data is now %d"%self.connections[0].send_jumbo_data)
 
 class TcpState:
     CLOSED = 0
@@ -271,6 +275,7 @@ class Connection():
         self.interface = args.source_interface
         self.maintain_half_close = 0
         self.supress_acks = 0
+        self.send_jumbo_data = 0
 
         self.orig_rwin = args.rwin
         self.rwin = args.rwin
@@ -330,6 +335,7 @@ class Connection():
         connection += "State:               {}\n".format(self.state)
         connection += "Half-close flag:     {}\n".format(self.maintain_half_close)
         connection += "Supress-Ack flag:    {}\n".format(self.supress_acks)
+        connection += "Send Jumbo Data:     {}\n".format(self.send_jumbo_data)
         return connection
 
     def pkt_printer(self, pkt):
@@ -448,11 +454,15 @@ class Connection():
         self.myseq += 1
         self.state.update(next_state)
 
-    def send_data(self, data):
+    def send_data(self):
         if not self.state.check(TcpState.ESTABLISHED) and \
                 not self.state.check(TcpState.CLOSE_WAIT):
             print("Data can't be sent in state:{}".format(self.state))
             return
+        if self.send_jumbo_data:
+            data="happy"*200
+        else:
+            data="happy"
         data_pkt = self.packet_constructor('A',load_data=data)
         send((self.ip/data_pkt), verbose=0)
 
