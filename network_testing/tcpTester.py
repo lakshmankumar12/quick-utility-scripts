@@ -159,6 +159,8 @@ class Manager():
             s        -> print connection state details
             h        -> toggle half-close flag (whether to respond to fin or not with a fin)
             z        -> zero/un-zero receive win
+            a        -> send a ack now
+            A        -> toggle supress-ack
         '''
         print (self.helpString)
 
@@ -188,7 +190,15 @@ class Manager():
             else:
                 self.connections[0].rwin = self.connections[0].orig_rwin
             print("Connection rwin is now %d"%self.connections[0].rwin)
-            self.connections[0].send_ack()
+            self.connections[0].send_ack(force=True)
+        elif char == 'a':
+            self.connections[0].send_ack(force=True)
+            print("Sent a ack. Peer-Seq-Acked:{}".format(self.connections[0].peerseqacked - self.connections[0].peerseqstart))
+        elif char == 'A':
+            self.connections[0].supress_acks = 1 - self.connections[0].supress_acks
+            print("Suppress ack is now %d"%self.connections[0].supress_acks)
+            if not self.connections[0].supress_acks:
+                self.connections[0].send_ack()
 
 class TcpState:
     CLOSED = 0
@@ -260,6 +270,7 @@ class Connection():
         self.dst_port = args.destination_port
         self.interface = args.source_interface
         self.maintain_half_close = 0
+        self.supress_acks = 0
 
         self.orig_rwin = args.rwin
         self.rwin = args.rwin
@@ -275,6 +286,7 @@ class Connection():
         self.seqstart = self.myseq
         self.peer_acked = self.myseq
         self.peerseqstart = self.peerseq
+        self.peerseqacked = self.peerseq
 
         if args.source_port == -1:
             self.src_port = random.randrange(32768,61000)
@@ -310,11 +322,14 @@ class Connection():
         connection  = "Src-IP/Dest-IP:      {}/{}\n".format(self.src_ip,self.dst_ip)
         connection += "Src-Port/Dst-Port:   {}/{}\n".format(self.src_port,self.dst_port)
         connection += "Intf:                {}\n".format(self.interface)
-        connection += "Seq/Ack,  Seq/Peer-acked/me-acked:   {}/{}   {}/{}/{}\n".format(self.myseq, self.peerseq,  self.myseq-self.seqstart, self.peer_acked-self.seqstart, self.peerseq-self.peerseqstart)
+        connection += "MySeq/PeerSeq        {}/{}\n".format(self.myseq, self.peerseq)
+        connection += "MySeq/Peer-Acked     {}/{}\n".format(self.myseq-self.seqstart, self.peer_acked-self.seqstart)
+        connection += "Peer-Seq/Me-Acked    {}/{}\n".format(self.peerseq-self.peerseqstart, self.peerseqacked - self.peerseqstart)
         connection += "Tcp-Option:          {}\n".format(self.tcp_options)
         connection += "TimeStamps:          {}\n".format(self.timestamps)
         connection += "State:               {}\n".format(self.state)
         connection += "Half-close flag:     {}\n".format(self.maintain_half_close)
+        connection += "Supress-Ack flag:    {}\n".format(self.supress_acks)
         return connection
 
     def pkt_printer(self, pkt):
@@ -333,7 +348,7 @@ class Connection():
                 if peer_pkt[TCP].seq + len(peer_pkt[Raw].load) > self.peerseq:
                     old_ack = self.peerseq - self.peerseqstart
                     self.peerseq = peer_pkt[TCP].seq + len(peer_pkt[Raw].load)
-                    print("Got new data. Setting my-ack from {} to {}".format(old_ack, self.peerseq - self.peerseqstart))
+                    print("Got new data. Setting peer-seq from {} to {}".format(old_ack, self.peerseq - self.peerseqstart))
             to_send_ack = True
         if 'F' in peer_pkt[TCP].flags:
             if self.state.check(TcpState.ESTABLISHED) or \
@@ -358,6 +373,7 @@ class Connection():
         dst_port = self.dst_port
         seq = self.myseq
         ack = self.peerseq
+        self.peerseqacked = ack
         rwin = self.rwin
         tcp_options = self.tcp_options
         timestamps = self.timestamps
@@ -440,9 +456,10 @@ class Connection():
         data_pkt = self.packet_constructor('A',load_data=data)
         send((self.ip/data_pkt), verbose=0)
 
-    def send_ack(self):
-        ack = self.packet_constructor('A')
-        send(self.ip/ack, verbose=0)
+    def send_ack(self, force=False):
+        if force or not self.supress_acks:
+            ack = self.packet_constructor('A')
+            send(self.ip/ack, verbose=0)
 
     def wait_for_syn(self):
         if not self.state.check(TcpState.CLOSED):
@@ -498,8 +515,7 @@ class Connection():
         if to_send_ack:
             #not sure, if user wants to send data/fin on this too.
             # to support that
-            ack = self.packet_constructor('A')
-            send(self.ip/ack, verbose=0)
+            self.send_ack()
 
     def get_a_packet_and_process(self, mustGet=True, timeout=3):
         pkt = mgr.getNextPacket(timeout=timeout)
@@ -546,8 +562,7 @@ class Connection():
         if to_send_ack:
             #not sure, if user wants to send data/fin on this too.
             # to support that
-            ack = self.packet_constructor('A')
-            send(self.ip/ack, verbose=0)
+            self.send_ack()
 
     def is_peer_fin_received(self):
         if self.state.check(TcpState.CLOSING) or \
