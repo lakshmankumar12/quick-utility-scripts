@@ -21,6 +21,12 @@ if [ "x$1" == "x-k" ] ; then
 
 else
 
+  no_sessions=$(tmux list-session 2> /dev/null | wc -l)
+  if [[ $no_sessions -ne 0 ]] ; then
+      echo "Hey there is already running tmux session"
+      exit 1
+  fi
+
   tmux new-session -d -s mac-main
   #tmux move-window -t 20
   tmux new-window -d -k -t 0 -n "mac-notes" -c "$HOME/bitbucket/aryaka-mac-notes"
