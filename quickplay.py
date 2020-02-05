@@ -298,6 +298,7 @@ parser.add_argument("-l", "--playlist", help="Treat each arg as a file containin
 parser.add_argument("-t", "--tempmode", help="Dont write playlist file in end", action="store_true")
 parser.add_argument("-r", "--starfile", help="write this in starred files", default="/tmp/starred")
 parser.add_argument("-d", "--dumpfile", help="use this dump file", default="/tmp/currp.lst")
+parser.add_argument("-v", "--startvolume", help="start at this volume (1 to 100)", type=int, default=100)
 parser.add_argument("files", nargs="+", help="Files to play!")
 cmd_options = parser.parse_args()
 
@@ -330,6 +331,10 @@ if cmd_options.shuffle:
     random.seed()
     random.shuffle(files)
 
+if cmd_options.startvolume < 1 or cmd_options.startvolume > 100:
+    print ("Incorrect volume:{}. Setting to 100".format(cmd_options.startvolume))
+    cmd_options.startvolume = 100
+
 # Keep this last in options - so that you
 # see any errors
 if not cmd_options.noerrorsuppress:
@@ -343,6 +348,7 @@ gs.files = files
 gs.curr_file_n = 0
 gs.starfile = cmd_options.starfile
 gs.dumpfile = cmd_options.dumpfile
+gs.curr_volume = cmd_options.startvolume
 
 if not cmd_options.tempmode:
     dump_playlist(gs)
