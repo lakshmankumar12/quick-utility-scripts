@@ -27,6 +27,8 @@ else
       exit 1
   fi
 
+  mkdir -p /tmp/tmuxbuffer
+
   tmux new-session -d -s mac-main
   #tmux move-window -t 20
   tmux new-window -d -k -t 0 -n "mac-notes" -c "$HOME/bitbucket/aryaka-mac-notes"

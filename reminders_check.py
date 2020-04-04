@@ -8,6 +8,30 @@ If the user needs to remove a reminder, the user must remove it
 off the current_reminders file.
 '''
 
+JustForRecordLauchCtlScript='''
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+        <key>Label</key>
+        <string>local.reminder.test.agent</string>
+        <key>ProgramArguments</key>
+        <array>
+                <string>/Users/lakshman_narayanan/github/quick-utility-scripts/reminders_check.py</string>
+        </array>
+        <key>StandardErrorPath</key>
+        <string>/dev/null</string>
+        <key>StandardOutPath</key>
+        <string>/dev/null</string>
+        <key>StartInterval</key>
+        <integer>60</integer>
+</dict>
+</plist>
+<!-- The above should go into ~/Library/LaunchAgents/local.reminder.test.agent.plist -->
+<!-- It will automatically start on reboot. Or you can launch it with -->
+<!-- launchctl load ~/Library/LaunchAgents/local.reminder.test.agent.plist -->
+'''
+
 import subprocess
 import datetime
 import logging
@@ -22,12 +46,12 @@ def check_asked_entity(asked,current):
 def stale(message, asked_min, asked_hour, current_second, reminders_file):
     display_message = "Old Reminder {}:{}. Now {}:{} : {}. If this is done, remove from {} file".format(
                             asked_hour, asked_min, current_second.hour,current_second.minute,message, reminders_file)
-    command='''/usr/bin/osascript -e 'tell application "System Events" to display dialog "{}" with icon note' &'''.format(display_message)
+    command='''/usr/bin/osascript -e 'tell application "System Events" to display dialog "{}" with icon note' '''.format(display_message)
     subprocess.run(command,shell=True)
 
 def expired(message, current_second):
-    display_message = "Reminder at {}:{} : {}".format(current_second.hour,current_second.minute,message)
-    command='''/usr/bin/osascript -e 'tell application "System Events" to display dialog "{}" with icon caution' &'''.format(display_message)
+    display_message = "Reminder at {:02d}:{:02d} : {}".format(current_second.hour,current_second.minute,message)
+    command='''/usr/bin/osascript -e 'tell application "System Events" to display dialog "{}" with icon caution' '''.format(display_message)
     subprocess.run(command,shell=True)
 
 def scan_file(reminders_file, current_second):
@@ -52,9 +76,7 @@ def scan_file(reminders_file, current_second):
                    asked_weekday == (current_second.weekday()+1)%7:
                 logging.debug("expired line: {}".format(line.strip()))
                 expired(message, current_second)
-            elif (asked_min + asked_hour * 60) < (current_second.minute + current_second.hour * 60):
-                logging.debug("stale line: {}".format(line.strip()))
-                stale(message, asked_min, asked_hour, current_second, reminders_file)
+                continue
 
 def main():
     logging.basicConfig(filename="/tmp/reminders_check.log", level=logging.DEBUG)
