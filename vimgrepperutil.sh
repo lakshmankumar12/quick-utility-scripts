@@ -26,4 +26,4 @@ else
     shift
 fi
 
-grep "${file_grep_pat}" "${file_list}" | xargs --delimiter='\n' grep -Hn "$@" ${grep_pat}
+grep "${file_grep_pat}" "${file_list}" | awk 'seen[$0]++ == 0 { if(system("[ -f \"" $0 "\" ]") == 0) { print $0 } }'| xargs --delimiter='\n' grep -Hn "$@" ${grep_pat}
