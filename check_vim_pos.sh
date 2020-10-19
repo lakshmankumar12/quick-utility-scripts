@@ -3,7 +3,7 @@
 source ~/.bashrc 2> /dev/null
 
 declare -A ttylist
-eval ttylist=$(listtmuxpanes| awk -F\| 'BEGIN {printf "(" } 1 {printf "[\"%s\"]=\"%s-%s-%s\" ",$8,$1,$2,$3} END { printf ")" } ')
+eval ttylist=$(listalltmuxpanes| awk -F\| 'BEGIN {printf "(" } 1 {printf "[\"%s\"]=\"%s-%s-%s\" ",$8,$1,$2,$3} END { printf ")" } ')
 
 existing_files=($(\ls /tmp/vimPos.*))
 for i in "${existing_files[@]}" ; do
