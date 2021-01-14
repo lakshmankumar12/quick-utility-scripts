@@ -106,4 +106,6 @@ fi
 start_timer ${timer}
 if [[ ${success} -eq 1 ]] ; then
     /usr/bin/osascript -e 'tell application "System Events" to display dialog "Timer Expired: '"${message}"'" with icon note'
+    exit 0
 fi
+exit 1
