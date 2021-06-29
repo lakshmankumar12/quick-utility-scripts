@@ -14,15 +14,14 @@ import sys
 
 ### Protocol Implementation
 
-# This is just about the simplest possible protocol
-class Echo(Protocol):
+class Blackhole(Protocol):
     def dataReceived(self, data):
         """
         As soon as any data is received, do Nothing
         """
         pass
 
-class EchoUDP(DatagramProtocol):
+class BlackholeUDP(DatagramProtocol):
     def datagramReceived(self, datagram, address):
         """
         As soon as any data is received, do Nothing
@@ -43,9 +42,9 @@ def parse_options():
 def main():
     opts = parse_options()
     f = Factory()
-    f.protocol = Echo
+    f.protocol = Blackhole
     reactor.listenTCP(opts.localport, f, interface=opts.localip)
-    reactor.listenUDP(opts.localport, EchoUDP(), interface=opts.localip)
+    reactor.listenUDP(opts.localport, BlackholeUDP(), interface=opts.localip)
     reactor.run()
 
 if __name__ == '__main__':
