@@ -369,7 +369,7 @@ while gs.curr_file_n < len(gs.files) and gs.running:
         else:
             break
     if not gs.player.is_playing():
-        print ("Player hasn't started playing even after waiting 0.75 seconds")
+        print ("Player hasn't started playing even after waiting 0.75 seconds for file {}".format(f))
         sys.exit(1)
     if r != 0:
         print ("Trouble in playing file {}".format(f))
