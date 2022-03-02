@@ -109,6 +109,7 @@ helpString=\
     p        -> Prev Song
     vNN;     -> set volume to NN (0 to 100)
     sNNN;    -> move to NNN sec
+    sNN:MM;  -> goto NN:MM in min:sec
     *        -> Add to star file
     gv       -> show current volume
     gp       -> dump current playlist
@@ -119,6 +120,7 @@ helpString=\
     a/b      -> Set a & b points.
     c        -> clear both a/b.
     d        -> clear just b
+    A        -> goto a-time
     t        -> Show tags of current file
 '''
 def showHelp():
@@ -190,6 +192,11 @@ def process_char(gs, char):
             if gs.a_time:
                 gs.b_time = 0
                 gs.ab_status="A-"
+        elif char == 'A':
+            if gs.ab_status == "AB":
+                gs.player.set_time(gs.a_time)
+            else:
+                pass
         elif char == 't':
             showTags(gs)
         elif char == '?':
@@ -217,12 +224,22 @@ def process_char(gs, char):
                 val=int(gs.user_in_so_far[1:])
                 set_volume(gs, val)
             elif gs.user_in_so_far[0] == 's':
-                val=int(gs.user_in_so_far[1:])
+                if ':' in gs.user_in_so_far:
+                    minutes,seconds = gs.user_in_so_far[1:].split(':')
+                    val = int(minutes)*60 + int(seconds)
+                else:
+                    val=int(gs.user_in_so_far[1:])
                 val *= 1000
                 if val < gs.player.get_length() and val > 0:
                     gs.player.set_time(val)
         elif char.isdigit():
             add = 1
+        elif char == ":":
+            if ':' in gs.user_in_so_far:
+                # allow only one ':'
+                pass
+            else:
+                add = 1
         else:
             pass
     if add:
