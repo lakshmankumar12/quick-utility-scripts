@@ -16,6 +16,8 @@ helpstr = '''
   p   P   b   B  m
   y   r   l   v
   sh  Sh  s   h
+  Misc:
+  sp  nl
 '''
 
 charlist = {}
@@ -83,7 +85,8 @@ charlist['-m']  = '\u0902'
 charlist['-H']  = '\u0903'
 charlist['-s']  = '\u0951'
 charlist['-a']  = '\u0952'
-charlist['-d']  = '"'
+#charlist['-d']  = '"'
+charlist['-d']  = '\u1cda'
 
 if sys.argv[1] == '-h' or sys.argv[1] == '--help':
     print (helpstr)
