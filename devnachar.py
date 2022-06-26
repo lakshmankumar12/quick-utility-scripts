@@ -17,7 +17,7 @@ helpstr = '''
   y   r   l   v
   sh  Sh  s   h
   Misc:
-  sp  nl
+  sp  nl Om
 '''
 
 charlist = {}
@@ -57,6 +57,7 @@ charlist['h']  = '\u0939'
 
 charlist['sp'] = ' '
 charlist['nl'] = '\n'
+charlist['Om'] = '\u0950'
 
 charlist['a']  = '\u0905'
 charlist['A']  = '\u0906'
