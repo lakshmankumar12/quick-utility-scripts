@@ -7,6 +7,15 @@ import sys
 import pexpect
 import datetime
 
+PASSWORD_FILE='/root/.vpnpasswd'
+OTP_FILE='/root/.vpnkey'
+
+USER='lakshmankumar.narayanan@gxc.io'
+SERVER='172.126.76.180'
+DOMAIN='GXC'
+PROTOCOL='wireguard'
+#PROTOCOL='sslvpn'
+
 def expect_child(child, expect_list, intent_desc, eof_ok=0,
                     print_output=0, timeout=0, timeout_ok=0):
     ''' Wrapper on top of pexpect's child.expect([expect-list])
@@ -23,6 +32,7 @@ def expect_child(child, expect_list, intent_desc, eof_ok=0,
     try:
         error = ""
         did_timeout = 0
+        did_eof = 0
         if timeout:
             result = child.expect(expect_list, timeout)
         else:
@@ -31,6 +41,7 @@ def expect_child(child, expect_list, intent_desc, eof_ok=0,
                 #huh!
                 error = "Got none of the expected result!"
     except pexpect.EOF:
+        did_eof = 1
         if eof_ok:
             result = len(expect_list)
         else:
@@ -44,7 +55,7 @@ def expect_child(child, expect_list, intent_desc, eof_ok=0,
     if print_output:
         before = child.before.decode('utf-8')
         print(before)
-        if did_timeout != 1:
+        if did_timeout != 1 and did_eof != 1:
             after = child.after.decode('utf-8')
             print(after)
     if error:
@@ -54,17 +65,9 @@ def expect_child(child, expect_list, intent_desc, eof_ok=0,
             expected += i + "\n"
         err_str += "Expected:\n" + expected + "\n"
         with open("general_expect_failure","w",encoding="utf-8") as fd:
-            fd.write(err_str+child.before)
+            fd.write(err_str+str(child.before))
         raise Exception(err_str)
     return result
-
-PASSWORD_FILE='/root/.vpnpasswd'
-OTP_FILE='/root/.vpnkey'
-
-USER='lakshmankumar.narayanan@gxc.io'
-SERVER='172.126.76.180'
-DOMAIN='GXC'
-
 
 def load_from_file(file):
     ''' load value from file as a string  '''
@@ -90,10 +93,10 @@ def print_time():
 
 def run_forever():
     ''' run vpn client till it dies '''
-    cmd=f"netExtender --no-reconnect -u '{USER}' -d {DOMAIN} {SERVER}"
+    cmd=f"netExtender --no-reconnect -u '{USER}' -d {DOMAIN} -T {PROTOCOL} {SERVER}"
 
     print_time()
-    print ("Starting vpn")
+    print (f"Starting vpn with cmd: {cmd}")
     child = pexpect.spawn(cmd)
 
     passwd_list = ['Password:']
@@ -128,13 +131,22 @@ def run_forever():
     otp = get_otp()
     child.sendline(otp)
 
-    post_otp_list = ['NetExtender connected successfully']
+    post_otp_list = ['NetExtender.*connected successfully']
     op = expect_child(child, post_otp_list,
                  "Waiting for connect success",
+                 timeout=20,
                  print_output=1)
     if op != 0:
         print ("expect failed")
         sys.exit(1)
+
+    #grab more output anyway
+    post_otp_list = ['Just to grab ouput']
+    expect_child(child, post_otp_list,
+                 "Collect all connect output",
+                 timeout=2,
+                 timeout_ok=1,
+                 print_output=1)
 
     print_time()
     print ("Brilliant connected")
@@ -160,7 +172,8 @@ def run_forever():
 
 def main():
     ''' main '''
-    run_forever()
+    while True:
+        run_forever()
 
 
 main()
