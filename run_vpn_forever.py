@@ -19,7 +19,10 @@ DOMAIN='GXC'
 PROTOCOL='wireguard'
 #PROTOCOL='sslvpn'
 
-KEEP_GOING=True
+global_status = {}
+global_status['keep_going'] = True
+global_status['connected'] = False
+global_status['ping_status'] = True
 
 def expect_child(child, expect_list, intent_desc, eof_ok=0,
                     print_output=0, timeout=0, timeout_ok=0,
@@ -107,22 +110,29 @@ def get_ping_ip():
 
 def ping_thread(discard_args):
     ping_ip = get_ping_ip()
-    print (f"Will ping {ping_ip}")
     cmd=f"ping -c 3 {ping_ip}"
     last_ping_time = datetime.datetime.now()
-    while KEEP_GOING:
-        sleep (5)
-        now = datetime.datetime.now()
-        if now - last_ping_time > datetime.timedelta(seconds=600):
-            last_ping_time = now
+    while True:
+        global_status['ping_event'].wait(timeout=10)
+        global_status['ping_event'].clear()
+        if not global_status['keep_going']:
+            break
+        if global_status['connected']:
             proc = subprocess.run(cmd, shell=True, capture_output=True)
             op = proc.stdout.decode('utf-8')
-            print (f"{now_str()} Ran ping cmd:{cmd} and got output:")
-            print (op)
+            if proc.returncode == 0:
+                success = True
+                global_status['ping_status'] = True
+            else:
+                success = False
+                global_status['ping_status'] = False
+            print (f"{now_str()} Ran ping cmd:{cmd}, ok:{success}")
+            if not success:
+                print (op)
+
 
 def run_forever():
     ''' run vpn client till it dies '''
-    global KEEP_GOING
     cmd=f"netExtender --no-reconnect -u '{USER}' -d {DOMAIN} -T {PROTOCOL} {SERVER}"
 
     print (f"{now_str()} Starting vpn with cmd: {cmd}")
@@ -179,9 +189,15 @@ def run_forever():
                  print_output=1)
 
     print (f"{now_str()} Connected")
+    global_status['connected'] = True
+    global_status['ping_status'] = True  #assume ping is okay
+    global_status['ping_event'].set()
     monitor_time = datetime.datetime.now()
 
     while True:
+        if not global_status['ping_status']:
+            print ("f{now_str()}  Detected a failing ping.. Killing vpn")
+            child.sendline("\003")
         try:
             disconnect_wait_list = ['Exiting NetExtender client']
             op = expect_child(child, post_otp_list,
@@ -203,18 +219,21 @@ def run_forever():
                 return
             if op == 0:
                 print (f"{now_str()} Disconnected")
-            if op == 0 or KEEP_GOING == 0:
+            if op == 0 or global_status['keep_going'] == 0:
                 child.sendline("\003")
         except KeyboardInterrupt:
             print (f"{now_str()} User pressed ^c. Stopping vpn")
-            KEEP_GOING=False
+            global_status['keep_going']=False
+            global_status['ping_event'].set()
             child.sendline("\003")
 
 def main():
     ''' main '''
     thr = threading.Thread(target=ping_thread, args=(None,))
+    global_status['ping_event'] = threading.Event()
     thr.start()
-    while KEEP_GOING:
+    while global_status['keep_going']:
+        global_status['connected'] = False
         run_forever()
     print ("Waiting for ping thread to finish")
     thr.join()
