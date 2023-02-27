@@ -105,13 +105,16 @@ def get_otp():
 def now_str():
     return datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S %Z")
 
+def td_days_hrs_mins_sec(td):
+    return td.days, td.seconds//3600, (td.seconds//60)%60, td.seconds%60
+
 def get_ping_ip():
     return load_from_file(PING_FILE)
 
 def ping_thread(discard_args):
     ping_ip = get_ping_ip()
     cmd=f"ping -c 3 {ping_ip}"
-    last_ping_time = datetime.datetime.now()
+    last_report_time = datetime.datetime.fromtimestamp(0)
     while True:
         global_status['ping_event'].wait(timeout=10)
         global_status['ping_event'].clear()
@@ -123,12 +126,17 @@ def ping_thread(discard_args):
             if proc.returncode == 0:
                 success = True
                 global_status['ping_status'] = True
+                now = datetime.datetime.now()
+                if now - last_report_time > datetime.timedelta(minutes=15):
+                    print (f"{now_str()} Ran ping cmd:{cmd}, ok:{success}")
+                    last_report_time = now
             else:
                 success = False
                 global_status['ping_status'] = False
-            print (f"{now_str()} Ran ping cmd:{cmd}, ok:{success}")
-            if not success:
                 print (op)
+                print (f"{now_str()} Ran ping cmd:{cmd}, ok:{success}")
+        else:
+            last_report_time = datetime.datetime.fromtimestamp(0)
 
 
 def run_forever():
@@ -192,11 +200,13 @@ def run_forever():
     global_status['connected'] = True
     global_status['ping_status'] = True  #assume ping is okay
     global_status['ping_event'].set()
-    monitor_time = datetime.datetime.now()
+    now = datetime.datetime.now()
+    global_status['connected_time'] = now
+    monitor_time = now
 
     while True:
         if not global_status['ping_status']:
-            print ("f{now_str()}  Detected a failing ping.. Killing vpn")
+            print (f"{now_str()}  Detected a failing ping.. Killing vpn")
             child.sendline("\003")
         try:
             disconnect_wait_list = ['Exiting NetExtender client']
@@ -210,8 +220,10 @@ def run_forever():
             if op == len(disconnect_wait_list) + 1:
                 #timeout
                 now = datetime.datetime.now()
-                if now - monitor_time > datetime.timedelta(seconds=3600):
-                    print (f"{now_str()} Cool VPN.. running for an hour now")
+                if now - monitor_time > datetime.timedelta(hours=1):
+                    since_connect = now - global_status['connected_time']
+                    days, hours, mins, secs = td_days_hrs_mins_sec(since_connect)
+                    print (f"{now_str()} Cool VPN.. running for an {days} days, {hours} hours, {mins} mins, {secs} secs")
                     monitor_time = now
                 continue
             elif op == len(disconnect_wait_list):
