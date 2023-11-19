@@ -1,3 +1,17 @@
+### process a file like this:
+###
+###   line1col1  line1col2     line1col3  line1col4
+###              line2col2ctd             line2col4ctd
+###   ---------
+###
+###  into:
+###
+###   line1col1,line1col2 line2col2ctd,line1col3,line1col4 line2col4ctd
+###
+###  Useful in the mutual-funds consolidated processing where
+###  the fund names are split across lines.
+###  Manually add the --------- between funds and run this.
+###  Add the --------- in the end to process **THE LAST LINE**
 function stripw(var) {
     gsub(/^[ \t]+/,"",var);
     gsub(/[ \t]+$/,"",var);
