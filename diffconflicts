@@ -85,18 +85,27 @@ REMOTE="$4"
 MERGED="$5"
 LCONFL="${MERGED}.$$.LCONFL"
 RCONFL="${MERGED}.$$.RCONFL"
+cmdfile=$(mktemp /tmp/vimcmd-XXXXX)
 
 # Always delete our temp files; Git will handle it's own temp files.
-trap 'rm -f "'"${LCONFL}"'" "'"${RCONFL}"'"' SIGINT SIGTERM EXIT
+trap 'rm -f "'"${LCONFL}"'" "'"${RCONFL}"'" "'"$cmdfile"'"' SIGINT SIGTERM EXIT
 
 # Remove the conflict markers for each 'side' and put each into a temp file
 sed -E -e '/^=======\r?$/,/^>>>>>>> /d' -e '/^<<<<<<< /d' "${MERGED}" > "${LCONFL}"
 sed -E -e '/^<<<<<<< /,/^=======\r?$/d' -e '/^>>>>>>> /d' "${MERGED}" > "${RCONFL}"
 
+cat <<EOF > $cmdfile
+edit $LCONFL
+set noro
+vert diffs $RCONFL
+tabedit $LOCAL
+vert diffs $BASE
+vert diffs $REMOTE
+tabfirst
+EOF
+
 # Fire up vimdiff
-$cmd -f -R -d "${LCONFL}" "${RCONFL}" \
-     -c ":set noro" \
-     -c ":nmap <leader>D :tabe $REMOTE<CR>:vert diffs $BASE<CR>:vert diffs $LOCAL<CR>:winc t<CR>:tabe $MERGED<CR>:tabfir<CR>"
+$cmd -f -R -c "source $cmdfile"
 
 EC=$?
 
