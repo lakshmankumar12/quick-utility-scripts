@@ -10,6 +10,12 @@ def sctp_init(opts):
     serveraddr          = (opts.serverip, opts.serverport)
     print ("Connecting to server:%s:%s"%serveraddr)
     sk = sctp.sctpsocket_tcp(socket.AF_INET)
+
+    if opts.bind:
+        print ("bind-address:%s", opts.bind)
+        sk.bind((opts.bind, 0))
+    else:
+        print ("no specific local ip.. letting kernel pick one")
     sk.connect(serveraddr)
 
     print ("Connected")
@@ -36,6 +42,7 @@ def full_conn(sk):
 
 def parse_args():
     parser = argparse.ArgumentParser()
+    parser.add_argument("-b", "--bind", help="local bind address", default="")
     parser.add_argument("serverip", help="server ip")
     parser.add_argument("serverport", help="server port", type=int, nargs="?", default=15151)
     cmd_options = parser.parse_args()
