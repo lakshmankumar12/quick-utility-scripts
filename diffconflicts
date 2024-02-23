@@ -4,21 +4,8 @@
 # NOTE: Now also an installable Vim plugin:
 # https://github.com/whiteinge/diffconflicts
 #
-# Git does a great job resolving merge conflicts automatically but there are
-# times when human intervention is still needed. Git resolves all the conflicts
-# that it is able to and finally wraps each conflict it cannot resolve within
-# special markers which must be resolved by a human.
-#
-# The vertical format and lack of syntax highlighting in the plain conflict
-# marker layout makes it difficult to spot subtle conflicts such as
-# single-character changes and this is where a two-way diff really shines!
-# To see this explained using screenshots, see:
+# Actual source:
 # http://vim.wikia.com/wiki/A_better_Vimdiff_Git_mergetool
-#
-# This script, when used as a Git mergetool, opens each "side" of the conflict
-# markers in a two-way vimdiff window. This combines all the awesome of Git's
-# automatic merging savvy with the awesome and simplicity of a simple two-way
-# diff.
 #
 # Add this mergetool to your ~/.gitconfig (you can substitute gvim for vim):
 #
@@ -51,17 +38,6 @@
 #       +--------------------------------+
 #       |  LOCAL   |   BASE   |  REMOTE  |
 #       +--------------------------------+
-#   Tab3 is the in-progress merge that Git has written to the filesystem
-#   containing the conflict markers. I.e., the file you would normally edit by
-#   hand when not using a mergetool.
-#       +--------------------------------+
-#       |       <<<<<<< HEAD             |
-#       |        LCONFL                  |
-#       |       =======                  |
-#       |        RCONFL                  |
-#       |       >>>>>>> someref          |
-#       +--------------------------------+
-#
 # Workflow:
 #
 # 1.    Save your changes to the LCONFL temporary file (the left window on the
