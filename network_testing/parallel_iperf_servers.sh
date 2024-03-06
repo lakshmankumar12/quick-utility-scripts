@@ -15,7 +15,6 @@ usage() {
 
 parse_args() {
     NUM_CLIENTS=1
-    SERVERIP="${pip}"
     BASE_PORT=5000
     REPORT_BASE="iperf-server"
     options=$(getopt -o hn:b:r: -l help,num-servers:,base-port:,report-base:, -n "$0" -- "$@")
