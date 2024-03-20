@@ -151,6 +151,7 @@ for i in $(seq 0 $((NUM_CLIENTS-1))); do
     echo "Running $cmd"
     eval $cmd &> $report_file &
     pids[${i}]=$!
+    sleep 1
 done
 
 function cleanup {
