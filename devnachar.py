@@ -2,6 +2,8 @@
 
 import sys
 
+## reference: https://en.wikipedia.org/wiki/Devanagari#Unicode
+
 helpstr = '''
   vowels:
   a   A   e   E   u   U   R
@@ -17,7 +19,7 @@ helpstr = '''
   y   r   l   v
   sh  Sh  s   h
   Misc:
-  sp  nl Om
+  sp  nl Om  hbi bi
 '''
 
 charlist = {}
@@ -58,6 +60,8 @@ charlist['h']  = '\u0939'
 charlist['sp'] = ' '
 charlist['nl'] = '\n'
 charlist['Om'] = '\u0950'
+charlist['bi'] = '\u0901'
+charlist['hbi'] = '\ua8f3'
 
 charlist['a']  = '\u0905'
 charlist['A']  = '\u0906'
