@@ -19,7 +19,9 @@ helpstr = '''
   y   r   l   v
   sh  Sh  s   h
   Misc:
-  sp  nl Om  hbi bi
+  space new  Om  half  bindu
+        line     bindu
+  sp    nl   Om  hbi    bi
 '''
 
 charlist = {}

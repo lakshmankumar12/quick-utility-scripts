@@ -1,17 +1,32 @@
 function stripw(var) {
     gsub(/^[ \t]+/,"",var);
     gsub(/[ \t]+$/,"",var);
+    gsub(/[ ]{2,}+$/," ",var);
     return var
 }
+function finish_line() {
+    folio = stripw(folio); isin=stripw(isin); name=stripw(name); units=stripw(units); date=stripw(date);
+    value = stripw(value); registrar=stripw(registrar); nav = stripw(nav);
+    printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",folio,isin,name,units,date,nav,value,registrar ;
+}
+BEGIN {
+    printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n","folio","isin","name","units","date","nav","value","registrar";
 
+}
 /^[[:digit:]]/ {
-                 folio = stripw(folio); name=stripw(name); units=stripw(units); date=stripw(date);
-                 value = stripw(value); registrar=stripw(registrar); nav = stripw(nav);
-                 printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\n",folio,name,units,date,nav,value,registrar ;
-                 folio = $1 ; name = $2 ; units = $3 ; date  = $4 ; nav = $5 ; value = $6 ; registrar = $7 ; next }
-1 { folio=folio $1 ; name=stripw(name) " " stripw($2) ; units=units $3 ; date=date $4 ; nav=nav $5 ; value=value $6 ; registrar=registrar $7}
+    finish_line()
+    folio = $1 ; isin = $2 ; name = $3 ; units = $5 ; date  = $6 ; nav = $7 ; value = $8 ; registrar = $9 ; next }
+1 {
+    folio=folio $1 ;
+    isin = isin $2 ;
+    name=stripw(name) " " stripw($3) ;
+    units=units $5 ;
+    date=date $6 ;
+    nav=nav $7 ;
+    value=value $8 ;
+    registrar=registrar $9
+}
 END {
-                 folio = stripw(folio); name=stripw(name); units=stripw(units); date=stripw(date);
-                 value = stripw(value); registrar=stripw(registrar); nav = stripw(nav);
-                 printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\n",folio,name,units,date,nav,value,registrar ; }
+    finish_line()
+}
 
