@@ -17,9 +17,12 @@ devna_helpstr = '''
   y   r   l   v
   sh  Sh  s   h
   Misc:
-  space new  Om  half  bindu
-        line     bindu
-  sp    nl   Om  hbi    bi
+  Om  half  bindu  single  double
+      bindu        line    line
+  Om  hbi    bi    ;       .
+
+  hy  sp   nl  cm
+  -   ' '  \n  ,
 '''
 
 devna_charlist = {}
@@ -57,11 +60,16 @@ devna_charlist['Sh'] = '\u0937'
 devna_charlist['s']  = '\u0938'
 devna_charlist['h']  = '\u0939'
 
-devna_charlist['sp'] = ' '
-devna_charlist['nl'] = '\n'
 devna_charlist['Om'] = '\u0950'
 devna_charlist['bi'] = '\u0901'
 devna_charlist['hbi'] = '\ua8f3'
+devna_charlist[';'] = '\u0964'
+devna_charlist['.'] = '\u0965'
+
+devna_charlist['sp'] = ' '
+devna_charlist['nl'] = '\n'
+devna_charlist['cm'] = ','
+devna_charlist['hy'] = '-'
 
 devna_charlist['a']  = '\u0905'
 devna_charlist['A']  = '\u0906'
@@ -93,3 +101,36 @@ devna_charlist['-a']  = '\u0952'
 #devna_charlist['-d']  = '"'
 devna_charlist['-d']  = '\u1cda'
 
+
+consonants =  set()
+consonants.update({ 'k',  'K',  'g',  'G',  'gn' })
+consonants.update({ 'c',  'C',  'j',  'J',  'gy' })
+consonants.update({ 't',  'T',  'd',  'D',  'N' })
+consonants.update({ 'th', 'Th', 'dh', 'Dh', 'n' })
+consonants.update({ 'p',  'P',  'b',  'B',  'm' })
+consonants.update({ 'y',  'r',  'l',  'v' })
+consonants.update({ 'sh', 'Sh', 's',  'h' })
+
+vowels = set()
+vowels.update({ 'a'  , 'A'  , 'e'  , 'E'  , 'u'  , 'U',  'R' })
+vowels.update({ 'ae' , 'i'  , 'O'  , 'w'})
+
+vowelizers = set()
+vowelizers.update({ '-a'  , '-A'  , '-e'  , '-E'  , '-u'  , '-U',  '-R' })
+vowelizers.update({ '-ae' , '-i'  , '-O'  , '-w'})
+
+# these can follow a previous vowelizer
+vowelizers2 = set()
+vowelizers2.update({ '-m', '-H', 'bi', 'hbi' })
+
+# half
+halfizer = '-h'
+
+# swaras
+swaras = set()
+swaras.update({ '-s',  '-a'  , '-d' })
+
+space = ' '
+newline = '\n'
+
+known_chars = {v:k for k,v in devna_charlist.items()}
