@@ -21,6 +21,10 @@ devna_helpstr = '''
       bindu        line    line
   Om  hbi    bi    ;       .
 
+  silentA
+
+  sa
+
   hy  sp   nl  cm
   -   ' '  \n  ,
 '''
@@ -65,6 +69,7 @@ devna_charlist['bi'] = '\u0901'
 devna_charlist['hbi'] = '\ua8f3'
 devna_charlist[';'] = '\u0964'
 devna_charlist['.'] = '\u0965'
+devna_charlist['sa'] = '\u093d'
 
 devna_charlist['sp'] = ' '
 devna_charlist['nl'] = '\n'

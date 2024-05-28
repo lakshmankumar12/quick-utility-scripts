@@ -34,6 +34,7 @@ def process_line(line):
         final = input_with_prefill("Line: ", str_to_show)
         to_save = final.split()
         result = ""
+        str_to_show = final
         ok = True
         for i,c in enumerate(to_save):
             if c not in dcl:
