@@ -1,2 +1,4 @@
 .*swp
 *pyc
+# softlink to pynotes
+my_python_util.py

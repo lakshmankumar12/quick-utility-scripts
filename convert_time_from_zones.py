@@ -53,7 +53,8 @@ def get_inzone(by_unix, by_coll, by_abbr):
     return info
 
 def ask_and_compute(inzone):
-    in_date_str = input(f"Give your {inzone.colloquial} time:")
+    print (f"Influential env-vars in order: TABBR:{os.getenv('TABBR','unset')}, TCOLL:{os.getenv('TCOLL','unset')}, TZ:{os.getenv('TZ','unset')}")
+    in_date_str = input(f"Give your {inzone.colloquial} time: ")
     in_date = dateutil.parser.parse(in_date_str)
     inzone_date = pytz.timezone(inzone.unix).localize(in_date)
     utc_date = inzone_date.astimezone(pytz.UTC)
