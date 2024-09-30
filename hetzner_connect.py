@@ -54,7 +54,7 @@ def main():
             print ("didnt get ok_op:%s, but got: %s, for %s"%(i.ok_op, res, i.desc))
             sys.exit(1)
 
-    c.interact()
+    c.interact(escape_character=None)
 
 if __name__ == "__main__":
     main()
