@@ -303,16 +303,6 @@ def showTags(gs):
         print("\nException on getting info for current")
 
 
-def initialize_udp_command_listener(gs, cmd_options):
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-
-    host="127.0.0.1"
-    port=19999
-    s.bind((host, port))
-
-    return s
-
 def starcurrent(gs):
     with open (gs.starfile,'a') as fd:
         try:
@@ -329,7 +319,10 @@ def getch():
         ch = msvcrt.getch()
         ch = b'\xe0' + ch
     else:
-        ch = ch.decode('utf-8')
+        try:
+            ch = ch.decode('utf-8')
+        except UnicodeDecodeError as e:
+            ch = None
     return ch
 
 
@@ -399,8 +392,6 @@ def main():
     if not cmd_options.tempmode:
         dump_playlist(gs)
 
-    udp = initialize_udp_command_listener(gs, cmd_options)
-
     while gs.curr_file_n < len(gs.files) and gs.running:
         f = gs.files[gs.curr_file_n]
         gs.player = vlc.MediaPlayer(f)
@@ -427,7 +418,8 @@ def main():
             check_ab(gs)
             if msvcrt.kbhit():
                 char = getch()
-                process_char(gs, char)
+                if char is not None:
+                    process_char(gs, char)
             else:
                 sleep(0.25)
             if gs.play_pause == 1:
