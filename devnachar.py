@@ -7,7 +7,7 @@ from devna_charlist import (
         )
 
 if sys.argv[1] == '-h' or sys.argv[1] == '--help':
-    print (devnahelpstr)
+    print (devna_helpstr)
     sys.exit(1)
 
 final=""

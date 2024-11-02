@@ -49,6 +49,7 @@ def process_line(line):
 
 def main():
     result = ""
+    clipfile=os.path.join(os.environ['HOME'],"host_c/Users/laksh/Documents/cliptest.txt")
     while True:
         try:
             line = input_with_prefill("Enter the devanagiri line: ", "")
@@ -58,6 +59,8 @@ def main():
             break
         processed = process_line(line)
         print (f"processed line: {processed}")
+        with open(clipfile, 'w') as cfd:
+            print (f"{processed}", file=cfd)
         result += processed
     return result
 
