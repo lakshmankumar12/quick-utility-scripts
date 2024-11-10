@@ -114,6 +114,7 @@ helpString=\
     vNN;     -> set volume to NN (0 to 100)
     sNNN;    -> move to NNN sec
     sNN:MM;  -> goto NN:MM in min:sec
+    Esc      -> abort an existing command like s/v
     *        -> Add to star file
     gv       -> show current volume
     gp       -> dump current playlist
@@ -166,6 +167,10 @@ def process_char(gs, char):
             print ("Incorrect first char:%d"%(char[0]))
         return
     add = 0
+    if char == 27:
+        ## Esc
+        gs.user_in_so_far == ""
+        return
     if gs.user_in_so_far == "":
         if char == 'q':
             gs.player.stop()
@@ -318,6 +323,9 @@ def getch():
     if ch==b'\xe0':
         ch = msvcrt.getch()
         ch = b'\xe0' + ch
+    elif ch==27:
+        ## Esc
+        return ch
     else:
         try:
             ch = ch.decode('utf-8')
