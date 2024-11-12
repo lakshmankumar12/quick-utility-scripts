@@ -1,5 +1,9 @@
 #!/usr/bin/python3
 
+import sys
+import os
+sys.path.append(os.path.join(os.getenv('HOME'),'github/pynotes'))
+
 from my_python_util import (
         general_expect,
         spawn_child_later_for_interaction,
