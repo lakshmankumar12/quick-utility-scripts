@@ -22,7 +22,7 @@ cwd_arr+=("$HOME/github/nixPowerToolNotes")
 cwd_arr+=("$HOME/github/pynotes")
 cwd_arr+=("$HOME")
 cwd_arr+=("$HOME/github/dotfiles")
-cwd_arr+=("$HOME/github/quick-utility-scripts")
+cwd_arr+=("$HOME/host_c/Users/laksh/Downloads/personal/github/quick-utility-scripts")
 cwd_arr+=("$HOME/github/languageNotes")
 cwd_arr+=("$HOME/github/general_reading_notes")
 
