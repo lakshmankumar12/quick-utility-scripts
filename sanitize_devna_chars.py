@@ -26,8 +26,9 @@ def input_with_prefill(prompt, text):
 
 def process_line(line):
     conv_chars = []
-    for c in line:
-        conv_chars.append(known_chars.get(c, "({:s} {:04x})".format(c, ord(c))))
+    if line != '.':
+        for c in line:
+            conv_chars.append(known_chars.get(c, "({:s} {:04x})".format(c, ord(c))))
     str_to_show = ' '.join(conv_chars)
     print (f"The line as is was: {str_to_show}")
     while True:

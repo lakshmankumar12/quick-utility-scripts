@@ -47,6 +47,8 @@ class GlobalState:
 
         self.a_time = 0
         self.b_time = 0
+        self.b_time_end = True
+
         self.ab_status="  "
 
 def print_current_status(gs):
@@ -80,7 +82,7 @@ def update_display(gs):
     else:
         gs.disp_title = gs.files[gs.curr_file_n]
     if gs.song_playing != 1:
-        gs.disp_title = "Not Playig"
+        gs.disp_title = "Not Playing"
     elif gs.play_pause == 1:
         gs.disp_st = "Playing"
     else:
@@ -114,18 +116,21 @@ helpString=\
     vNN;     -> set volume to NN (0 to 100)
     sNNN;    -> move to NNN sec
     sNN:MM;  -> goto NN:MM in min:sec
+    S        -> goto beginning 00:00
     Esc      -> abort an existing command like s/v
     *        -> Add to star file
     gv       -> show current volume
     gp       -> dump current playlist
-    Left/Right -> move forward/backward by 10s
     f/r      -> forward/backward by 2s
+    h/l      -> forward/backward by 5s
+    Left/Right -> move forward/backward by 10s
     F/R      -> forward/backward by 1min
     ?        -> Show this help
     a/b      -> Set a & b points.
     c        -> clear both a/b.
     d        -> clear just b
     A        -> goto a-time
+    B        -> set file-end as b-time
     t        -> Show tags of current file
 '''
 
@@ -196,6 +201,10 @@ def process_char(gs, char):
             move_by_sec(gs, 2)
         elif char == 'r':
             move_by_sec(gs, -2)
+        elif char == 'l':
+            move_by_sec(gs, 5)
+        elif char == 'h':
+            move_by_sec(gs, -5)
         elif char == 'F':
             move_by_sec(gs, 60)
         elif char == 'R':
@@ -204,9 +213,14 @@ def process_char(gs, char):
             if gs.a_time == 0:
                 gs.a_time = gs.player.get_time()
                 gs.ab_status="A-"
-        elif char == 'b':
+        elif char == 'b' or char == 'B':
             if gs.a_time != 0 and gs.b_time == 0:
-                gs.b_time = gs.player.get_time()
+                if char == 'B':
+                    gs.b_time = gs.player.get_length()
+                    gs.b_time_end = True
+                else:
+                    gs.b_time = gs.player.get_time()
+                    gs.b_time_end = False
                 if gs.b_time <= gs.a_time:
                     gs.b_time = 0
                 else:
@@ -220,12 +234,14 @@ def process_char(gs, char):
                 gs.b_time = 0
                 gs.ab_status="A-"
         elif char == 'A':
-            if gs.ab_status == "AB":
+            if gs.ab_status == "AB" or gs.ab_status == "A-":
                 gs.player.set_time(gs.a_time)
             else:
                 pass
         elif char == 't':
             showTags(gs)
+        elif char == 'S':
+            gs.player.set_time(0)
         elif char == '?':
             showHelp()
         else:
@@ -432,6 +448,11 @@ def main():
                 sleep(0.25)
             if gs.play_pause == 1:
                 if not gs.player.is_playing():
+                    if gs.b_time and gs.b_time_end:
+                       gs.player.stop()
+                       gs.player.play()
+                       gs.player.set_time(gs.a_time)
+                       continue
                     print ("Play completed")
                     gs.song_playing = 0
                     break
