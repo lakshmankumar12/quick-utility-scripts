@@ -35,8 +35,5 @@ def main():
     subprocess.check_output([alert_program,"Tcp Alert listener stopped!"])
 
 
-import daemon
-
-with daemon.DaemonContext():
-  main()
+main()
 

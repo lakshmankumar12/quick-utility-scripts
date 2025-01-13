@@ -30,11 +30,15 @@ def build_states():
     states = []
     states.append(CmdState(
                     desc='Initial bash prompt',
-                    expect_list=[r'lakshman@lakshman-VirtualBox:'], ok_op=0,
+                    expect_list=[r'lakshman@lakshman-VirtualBox'], ok_op=0,
+                    next_cmd='export TERM=xterm-256color'))
+    states.append(CmdState(
+                    desc='prompt post export',
+                    expect_list=[r'lakshman@lakshman-VirtualBox'], ok_op=0,
                     next_cmd='mhb'))
     states.append(CmdState(
                     desc='Prompt from bare post mosh in',
-                    expect_list=[r'lakshman@dev-alpha:'], ok_op=0,
+                    expect_list=[r'lakshman@dev-alpha'], ok_op=0,
                     next_cmd='sd'))
     states.append(CmdState(
                     desc='Prompt from dev',
@@ -57,6 +61,7 @@ def main():
         else:
             print ("didnt get ok_op:%s, but got: %s, for %s"%(i.ok_op, res, i.desc))
             sys.exit(1)
+        print(f'Completed: {i.desc}')
 
     c.interact(escape_character=None)
 
