@@ -50,7 +50,7 @@ def process_line(line):
 
 def main():
     result = ""
-    clipfile=os.path.join(os.environ['HOME'],"host_c/Users/laksh/Documents/cliptest.txt")
+    clipfile=os.path.join("/host_c/Users/laksh/Documents/cliptest.txt")
     while True:
         try:
             line = input_with_prefill("Enter the devanagiri line: ", "")
