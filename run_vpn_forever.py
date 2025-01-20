@@ -178,11 +178,14 @@ def run_forever():
     otp = get_otp()
     child.sendline(otp)
 
-    post_otp_list = ['NetExtender.*connected successfully']
+    post_otp_list = ['NetExtender.*connected successfully', 'Would you like to change your password now']
     op = expect_child(child, post_otp_list,
                  "Waiting for connect success",
                  timeout=20,
                  print_output=1)
+    if op == 1:
+        print("password change promtp received. Please fix this and re-start")
+        sys.exit(1)
     if op != 0:
         print ("expect failed")
         sys.exit(1)
