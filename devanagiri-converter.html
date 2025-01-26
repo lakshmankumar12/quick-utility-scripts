@@ -15,6 +15,9 @@
 </head>
 <body>
     <h2>Devanagari Converter</h2>
+
+    <div class="reference" id="reference"></div>
+
     <div>
         <label>Input Devanagari Text:</label><br>
         <textarea id="inputText" rows="3"></textarea>
@@ -29,8 +32,6 @@
     </div>
     <button onclick="convertToDevanagari()">Convert</button>
     
-    <div class="reference" id="reference"></div>
-
     <script>
         // Character mappings
         const devnaCharlist = {
@@ -41,7 +42,7 @@
             'p': '\u092a', 'P': '\u092b', 'b': '\u092c', 'B': '\u092d', 'm': '\u092e',
             'y': '\u092f', 'r': '\u0930', 'l': '\u0932', 'v': '\u0935',
             'sh': '\u0936', 'Sh': '\u0937', 's': '\u0938', 'h': '\u0939',
-            'Om': '\u0950', 'bi': '\u0901', 'hbi': '\ua8f3', ';': '\u0964', '.': '\u0965',
+            'om': '\u0950', 'bi': '\u0901', 'hbi': '\ua8f3', ';': '\u0964', '.': '\u0965',
             'sa': '\u093d', 'sp': ' ', 'nl': '\n', 'cm': ',', 'hy': '-',
             'a': '\u0905', 'A': '\u0906', 'e': '\u0907', 'E': '\u0908', 
             'u': '\u0909', 'U': '\u090a', 'R': '\u090b', 'ae': '\u090f',
@@ -74,6 +75,11 @@ sh  Sh  s   h
 
 Modifiers:
 -h (halant)  -s (swara)  -a (anudatta)  -d (double swara)
+
+Other chars:
+om(Om)  hbi (chandrabindu-halant)  bi(chandrabindu)
+; (one-line)     . (double-lines)   sa (avagraha)
+
         `;
 
         // Convert Devanagari to English mapping
