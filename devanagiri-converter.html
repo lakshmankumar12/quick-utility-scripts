@@ -33,6 +33,13 @@
     <button onclick="convertToDevanagari()">Convert</button>
     
     <script>
+        // Add keyboard shortcut
+        document.addEventListener('keydown', function(e) {
+            if (e.altKey && e.key === 'Enter') {
+                e.preventDefault();
+                convertToDevanagari();
+            }
+        });
         // Character mappings
         const devnaCharlist = {
             'k': '\u0915', 'K': '\u0916', 'g': '\u0917', 'G': '\u0918', 'gn': '\u0919',
