@@ -27,6 +27,7 @@ def main():
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind((bind_ip, bind_port))
     server.listen(5)  # max backlog of connections
+    print(f"clip_listener started with pid:{os.getpid()}, ip:{bind_ip} port:{bind_port}")
     try:
         while True:
             client_sock, address = server.accept()

@@ -43,17 +43,31 @@ def get_inzone(by_unix, by_coll, by_abbr):
         info = by_abbr.get(tabbr, None)
     if info is not None:
         return info
+    if tabbr:
+        print(f"Your TABBR: {tabbr} wasn't found. Ignoring")
     tcoll = os.getenv('TCOLL', "")
     if tcoll:
         info = by_coll.get(tcoll, None)
     if info is not None:
         return info
-    unixzone = os.getenv('TZ', 'Asia/Kolkata')
+    if tcoll:
+        print(f"Your TCOLL: {tcoll} wasn't found. Ignoring")
+    unixzone = os.getenv('TZ', '')
+    if not unixzone:
+        defunixzone='Asia/Kolkata'
+        print(f"Your TZ: {unixzone} wasn't found. Using {defunixzone}")
+        unixzone=defunixzone
     info = by_unix[unixzone]
     return info
 
 def ask_and_compute(inzone):
-    print (f"Influential env-vars in order: TABBR:{os.getenv('TABBR','unset')}, TCOLL:{os.getenv('TCOLL','unset')}, TZ:{os.getenv('TZ','unset')}")
+    print(( "Influential env-vars in order:\n"
+           f"    {'Abbreviation':17s} | {'Colloquial':17s} | {'Timezone':14s}\n"
+           f"    TABBR: {os.getenv('TABBR','unset'):10s} |"
+           f" TCOLL: {os.getenv('TCOLL','unset'):10s} |"
+           f" TZ: {os.getenv('TZ','unset'):10s}\n"
+           f"Eg: {'CST':17s} | {'Central':17s} | America/North_Dakota/Center.\n"
+            "To list all TZs:  timedatectl list-timezones"))
     in_date_str = input(f"Give your {inzone.colloquial} time: ")
     in_date = dateutil.parser.parse(in_date_str)
     inzone_date = pytz.timezone(inzone.unix).localize(in_date)
