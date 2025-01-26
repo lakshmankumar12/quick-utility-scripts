@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Devanagari Converter</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        textarea { width: 100%; margin: 10px 0; }
+        .reference { 
+            background: #f5f5f5;
+            padding: 10px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h2>Devanagari Converter</h2>
+    <div>
+        <label>Input Devanagari Text:</label><br>
+        <textarea id="inputText" rows="3"></textarea>
+    </div>
+    <div>
+        <label>English Character Mapping:</label><br>
+        <textarea id="mappedText" rows="3"></textarea>
+    </div>
+    <div>
+        <label>Output Devanagari Text:</label><br>
+        <textarea id="outputText" rows="3" readonly></textarea>
+    </div>
+    <button onclick="convertToDevanagari()">Convert</button>
+    
+    <div class="reference" id="reference"></div>
+
+    <script>
+        // Character mappings
+        const devnaCharlist = {
+            'k': '\u0915', 'K': '\u0916', 'g': '\u0917', 'G': '\u0918', 'gn': '\u0919',
+            'c': '\u091a', 'C': '\u091b', 'j': '\u091c', 'J': '\u091d', 'gy': '\u091e',
+            't': '\u091f', 'T': '\u0920', 'd': '\u0921', 'D': '\u0922', 'N': '\u0923',
+            'th': '\u0924', 'Th': '\u0925', 'dh': '\u0926', 'Dh': '\u0927', 'n': '\u0928',
+            'p': '\u092a', 'P': '\u092b', 'b': '\u092c', 'B': '\u092d', 'm': '\u092e',
+            'y': '\u092f', 'r': '\u0930', 'l': '\u0932', 'v': '\u0935',
+            'sh': '\u0936', 'Sh': '\u0937', 's': '\u0938', 'h': '\u0939',
+            'Om': '\u0950', 'bi': '\u0901', 'hbi': '\ua8f3', ';': '\u0964', '.': '\u0965',
+            'sa': '\u093d', 'sp': ' ', 'nl': '\n', 'cm': ',', 'hy': '-',
+            'a': '\u0905', 'A': '\u0906', 'e': '\u0907', 'E': '\u0908', 
+            'u': '\u0909', 'U': '\u090a', 'R': '\u090b', 'ae': '\u090f',
+            'i': '\u0910', 'O': '\u0913', 'w': '\u0914',
+            '-h': '\u094d', '-A': '\u093e', '-e': '\u093f', '-E': '\u0940',
+            '-u': '\u0941', '-U': '\u0942', '-R': '\u0943', '-ae': '\u0947',
+            '-i': '\u0948', '-O': '\u094b', '-w': '\u094c', '-m': '\u0902',
+            '-H': '\u0903', '-s': '\u0951', '-a': '\u0952', '-d': '\u1cda'
+        };
+
+        // Reverse mapping
+        const knownChars = Object.fromEntries(
+            Object.entries(devnaCharlist).map(([k, v]) => [v, k])
+        );
+
+        // Show reference text
+        document.getElementById('reference').textContent = `
+vowels:
+a   A   e   E   u   U   R
+ae  i   O   w  -m  -H
+
+consonants:
+k   K   g   G  gn
+c   C   j   J  gy
+t   T   d   D  N
+th  Th  dh  Dh n
+p   P   b   B  m
+y   r   l   v
+sh  Sh  s   h
+
+Modifiers:
+-h (halant)  -s (swara)  -a (anudatta)  -d (double swara)
+        `;
+
+        // Convert Devanagari to English mapping
+        document.getElementById('inputText').addEventListener('input', function(e) {
+            const input = e.target.value;
+            const mapped = [];
+            for (let i = 0; i < input.length; i++) {
+                const char = input[i];
+                const mapping = knownChars[char] || `(${char} ${char.charCodeAt(0).toString(16)})`;
+                mapped.push(mapping);
+            }
+            document.getElementById('mappedText').value = mapped.join(' ');
+        });
+
+        // Convert back to Devanagari
+        async function convertToDevanagari() {
+            const mapped = document.getElementById('mappedText').value;
+            const tokens = mapped.trim().split(/\s+/);
+            let result = '';
+            
+            for (const token of tokens) {
+                if (devnaCharlist[token]) {
+                    result += devnaCharlist[token];
+                } else {
+                    console.log(`Unknown token: ${token}`);
+                }
+            }
+            
+            document.getElementById('outputText').value = result;
+            
+            try {
+                await navigator.clipboard.writeText(result);
+                // Optional: Show feedback that text was copied
+                const button = document.querySelector('button');
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                setTimeout(() => button.textContent = originalText, 2000);
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+            }
+        }
+    </script>
+</body>
+</html>
