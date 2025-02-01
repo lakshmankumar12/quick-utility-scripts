@@ -18,9 +18,8 @@ def handle_client_connection(client_socket):
     client_socket.close()
     data = data.decode('utf-8')
     l = len(data)
-    f=open(clip_file,"w")
-    f.write(data)
-    f.close()
+    with open(clip_file,"w") as f:
+        f.write(data)
     print(f'Wrote {l} bytes into {clip_file}')
 
 def main():
@@ -28,6 +27,8 @@ def main():
     server.bind((bind_ip, bind_port))
     server.listen(5)  # max backlog of connections
     print(f"clip_listener started with pid:{os.getpid()}, ip:{bind_ip} port:{bind_port}")
+    with open('/tmp/clip_listener.pid', 'w') as ofd:
+        ofd.write(f'{os.getpid()}')
     try:
         while True:
             client_sock, address = server.accept()

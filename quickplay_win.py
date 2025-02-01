@@ -214,7 +214,7 @@ def process_char(gs, char):
                 gs.a_time = gs.player.get_time()
                 gs.ab_status="A-"
         elif char == 'b' or char == 'B':
-            if gs.a_time != 0 and gs.b_time == 0:
+            if gs.ab_status == "A-":
                 if char == 'B':
                     gs.b_time = gs.player.get_length()
                     gs.b_time_end = True
