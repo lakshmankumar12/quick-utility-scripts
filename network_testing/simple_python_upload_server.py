@@ -6,6 +6,7 @@ curl -F 'file=@path/to/file' http://server:port
 
 
 '''
+import argparse
 import http.server
 import socketserver
 import os
@@ -70,10 +71,17 @@ class FileUploadHandler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(b"Error uploading file")
 
-def run_server(port=8000):
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("port", help="port", type=int, nargs="?", default=8000)
+    cmd_options = parser.parse_args()
+    return cmd_options
+
+def run_server(port):
     with socketserver.TCPServer(("", port), FileUploadHandler) as httpd:
         print(f"Serving at http://0.0.0.0:{port}")
         httpd.serve_forever()
 
 if __name__ == "__main__":
-    run_server()
+    opts = parse_args()
+    run_server(opts.port)
