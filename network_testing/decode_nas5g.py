@@ -1,6 +1,11 @@
 #!/usr/bin/python
 
-def create_pcap_with_headers():
+import sys
+import re
+import argparse
+import subprocess
+
+def create_pcap_with_headers(nasdigits):
     # PCAP Global Header
     pcap_global_header = bytes([
         0xd4, 0xc3, 0xb2, 0xa1,  # Magic number
@@ -99,15 +104,7 @@ def create_pcap_with_headers():
         0x00,                    # requestsed(0)
     ])
 
-    # Your NAS PDU
-    nas_bytes = bytes.fromhex(
-        "7e021c3e0ebb027e006701003" +
-        "62e010ec1ffff9128017b002980" +
-        "80211001000010810600000000" +
-        "83060000000000d00000a00000" +
-        "050000100000110000230000240" +
-        "012018125090869647465726e6574"
-    )
+    nas_bytes = bytes.fromhex(nasdigits)
 
     # Calculate total length
     nas_len = len(nas_bytes)
@@ -150,4 +147,33 @@ def create_pcap_with_headers():
         f.write(sctp_header)
         f.write(data_chunk)
 
-create_pcap_with_headers()
+def parse_args():
+    parser = argparse.ArgumentParser(description='nas pdu decoder')
+    parser.add_argument("file", help="input file, - uses stdin(default)", nargs="?", default="-")
+    cmd_options = parser.parse_args()
+
+    infd = sys.stdin
+    if cmd_options.file != "-":
+        infd = open(cmd_options.file, 'r', encoding='utf-8')
+    setattr(cmd_options, "infd", infd)
+    return cmd_options
+
+
+def read_nas_bytes(opts):
+    inhexdigits = opts.infd.read()
+    inhexdigits = re.sub(r'\s+','',inhexdigits)
+    return inhexdigits
+
+
+def main():
+    opts = parse_args()
+    nasdigits = read_nas_bytes(opts)
+    create_pcap_with_headers(nasdigits)
+    completedProcess=subprocess.run('''tshark -o 'nas-5gs.null_decipher:TRUE' -r nas.pcap -V | awk '/NAS-PDU/{flag=1;next}/Item 2: id-UserLocationInformation/{flag=0} flag' ''',
+                                            shell=True, capture_output=True)
+    print ("stdout was:%s"%completedProcess.stdout.decode('utf-8'))
+    print ("stderr was:%s"%completedProcess.stderr.decode('utf-8'))
+    print ("exit code was:%s"%completedProcess.returncode)
+
+
+main()
