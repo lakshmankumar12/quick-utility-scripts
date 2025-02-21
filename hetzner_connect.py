@@ -28,11 +28,12 @@ def spawn_child(command):
 
 def main():
     print("sshing to myhetzner")
-    c = spawn_child("ssh myhetzner")
+    c = spawn_child("ssh -o ServerAliveInterval=60 -o ServerAliveCountMax=1 myhetzner")
     c.expect(['lakshman@lakshmandevhetzner'])
     print("ssh complete, attaching tmux")
     c.sendline('ta')
     c.interact(escape_character=None)
+    print("hetzner-connect done")
 
 if __name__ == "__main__":
     main()
