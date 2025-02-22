@@ -2,11 +2,11 @@
 
 
 usage() {
-    echo "$0 -i infile -o outfile timesfiles"
+    echo "$0 -i infile -o outfile -t timesfiles"
     echo ""
-    echo " timefile should be like this (it will be source as-is)"
-    echo 'arr+=("00:00:01.000;00:00:02.000")'
-    echo 'arr+=("00:00:03.000;00:00:04.000")'
+    echo " timefile should be like this"
+    echo '00:00:01.000	00:00:02.000'
+    echo '00:00:03.000	00:00:04.000'
 }
 
 
@@ -14,7 +14,7 @@ parse_args() {
     TIMES_FILE=""
     INFILE=""
     OUTFILE=""
-    options=$(getopt -o i:o:h -l help,infile:,outfile: -n "$0" -- "$@")
+    options=$(getopt -o i:o:t:h -l help,infile:,outfile:,timesfile: -n "$0" -- "$@")
     if [ $? -ne 0 ] ; then
         echo "Incorrect options provided"
         exit 1
@@ -32,6 +32,10 @@ parse_args() {
             OUTFILE="$1"
             shift
             ;;
+        -t|--timesfile)
+            TIMES_FILE="$1"
+            shift
+            ;;
         -h|--help)
             usage
             ;;
@@ -45,8 +49,6 @@ parse_args() {
         esac
     done
 
-    TIMES_FILE="$(echo $1 | xargs)" ; shift || true
-
     if [ -z "$TIMES_FILE" -o -z "$INFILE" -o -z "$OUTFILE" ] ; then
         echo "Must provide all of infile: $INFILE, outfile: $OUTFILE, timesfile: $TIMES_FILE"
         usage
@@ -58,30 +60,40 @@ parse_args() {
     fi
 }
 
-process() {
+read_times_file() {
     arr=()
-    source $TIMES_FILE
+    while read line ; do
+        read -r start end <<< "$line"
+        arr+=("$start;$end")
+    done < $TIMES_FILE
+}
 
-    rm -f snip*m4a
+process() {
+    read_times_file
+
+    rm -f .snip*m4a
 
     count=1
     for item in "${arr[@]}" ; do
         cmd='IFS=";" read -r start end <<< "'"$item"'"'
         eval $cmd
-        outfile=$(printf "snip%03d.m4a" $count)
+        outfile=$(printf ".snip%03d.m4a" $count)
         count=$((count + 1))
         ffmpeg -i $INFILE -ss $start -to $end -acodec copy $outfile
+        if [ $? -ne 0 ] ; then
+            exit
+        fi
     done
 
     for i in $(seq 1 $((count - 1))) ; do
-        outfile=$(printf "snip%03d.m4a" $i)
+        outfile=$(printf ".snip%03d.m4a" $i)
         for j in $(seq 1 3) ; do
-            echo "file $outfile" >> inlist.txt
+            echo "file $outfile" >> .inlist.txt
         done
     done
 
-    ffmpeg -f concat -safe 0 -i inlist.txt -c copy $OUTFILE
-
+    rm -f $OUTFILE
+    ffmpeg -f concat -safe 0 -i .inlist.txt -c copy $OUTFILE
 }
 
 parse_args "$@"

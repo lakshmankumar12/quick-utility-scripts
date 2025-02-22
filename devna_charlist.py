@@ -106,6 +106,17 @@ devna_charlist['-a']  = '\u0952'
 #devna_charlist['-d']  = '"'
 devna_charlist['-d']  = '\u1cda'
 
+devna_charlist['0']  = '\u0966'
+devna_charlist['1']  = '\u0967'
+devna_charlist['2']  = '\u0968'
+devna_charlist['3']  = '\u0969'
+devna_charlist['4']  = '\u096a'
+devna_charlist['5']  = '\u096b'
+devna_charlist['6']  = '\u096c'
+devna_charlist['7']  = '\u096d'
+devna_charlist['8']  = '\u096e'
+devna_charlist['9']  = '\u096f'
+
 
 consonants =  set()
 consonants.update({ 'k',  'K',  'g',  'G',  'gn' })
