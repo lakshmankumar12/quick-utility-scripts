@@ -63,6 +63,9 @@ parse_args() {
 read_times_file() {
     arr=()
     while read line ; do
+        if [ -z "$(echo $line | xargs)" ] ; then
+            continue
+        fi
         read -r start end <<< "$line"
         arr+=("$start;$end")
     done < $TIMES_FILE
@@ -79,13 +82,18 @@ process() {
         eval $cmd
         outfile=$(printf ".snip%03d.m4a" $count)
         count=$((count + 1))
-        ffmpeg -i $INFILE -ss $start -to $end -acodec copy $outfile
+        echo "Writing to $outfile"
+        ffmpeg -hide_banner -loglevel error -i $INFILE -ss $start -to $end -acodec copy $outfile
         if [ $? -ne 0 ] ; then
             exit
         fi
     done
+    count=$((count - 1))
 
-    for i in $(seq 1 $((count - 1))) ; do
+    echo "We have $count snips in total"
+    rm .inlist.txt
+
+    for i in $(seq 1 ${count}) ; do
         outfile=$(printf ".snip%03d.m4a" $i)
         for j in $(seq 1 3) ; do
             echo "file $outfile" >> .inlist.txt
@@ -93,7 +101,8 @@ process() {
     done
 
     rm -f $OUTFILE
-    ffmpeg -f concat -safe 0 -i .inlist.txt -c copy $OUTFILE
+    echo "concatenating"
+    ffmpeg -hide_banner -loglevel error -f concat -safe 0 -i .inlist.txt -c copy $OUTFILE
 }
 
 parse_args "$@"
