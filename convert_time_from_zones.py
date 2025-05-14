@@ -21,6 +21,7 @@ interested_zones = [
     TzInfo('America/Anchorage',           'Alaska',   'AKST',  'AKDT'),
     TzInfo('America/Phoenix',             'Arizona',  'MST',   'MST'),
     TzInfo('Pacific/Honolulu',            'Hawaii',   'HST',   'HDT'),
+    TzInfo('Australia/Melbourne',         'Melbourne','AEDT',  ''),
 ]
 
 def build_tables():

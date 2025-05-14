@@ -2,7 +2,7 @@
 
 
 usage() {
-    echo "$0 -i infile -o outfile -t timesfiles"
+    echo "$0 -i infile -o outfile -t timesfiles -r <repeat,def:3>"
     echo ""
     echo " timefile should be like this"
     echo '00:00:01.000	00:00:02.000'
@@ -14,7 +14,8 @@ parse_args() {
     TIMES_FILE=""
     INFILE=""
     OUTFILE=""
-    options=$(getopt -o i:o:t:h -l help,infile:,outfile:,timesfile: -n "$0" -- "$@")
+    REPEAT=3
+    options=$(getopt -o i:o:t:r:h -l help,infile:,outfile:,timesfile:,repeat: -n "$0" -- "$@")
     if [ $? -ne 0 ] ; then
         echo "Incorrect options provided"
         exit 1
@@ -38,6 +39,10 @@ parse_args() {
             ;;
         -h|--help)
             usage
+            ;;
+        -r|--repeat)
+            REPEAT="$1"
+            shift
             ;;
         --)
             break
@@ -95,7 +100,7 @@ process() {
 
     for i in $(seq 1 ${count}) ; do
         outfile=$(printf ".snip%03d.m4a" $i)
-        for j in $(seq 1 3) ; do
+        for j in $(seq 1 $REPEAT) ; do
             echo "file $outfile" >> .inlist.txt
         done
     done
