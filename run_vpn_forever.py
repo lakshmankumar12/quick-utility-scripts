@@ -97,7 +97,7 @@ def get_otp():
     ''' get otp '''
     key = load_from_file(OTP_FILE)
     cmd = f'oathtool -b --totp {key}'
-    proc = subprocess.run(cmd, shell=True, capture_output=True)
+    proc = subprocess.run(cmd, shell=True, capture_output=True, executable="/bin/bash")
     otp = proc.stdout.decode('utf-8').strip()
     print (f"got otp of {otp}")
     return otp
@@ -121,7 +121,7 @@ def ping_thread(discard_args):
         if not global_status['keep_going']:
             break
         if global_status['connected']:
-            proc = subprocess.run(cmd, shell=True, capture_output=True)
+            proc = subprocess.run(cmd, shell=True, capture_output=True, executable="/bin/bash")
             op = proc.stdout.decode('utf-8')
             if proc.returncode == 0:
                 success = True
@@ -141,7 +141,7 @@ def ping_thread(discard_args):
 
 def run_forever():
     ''' run vpn client till it dies '''
-    cmd=f"netExtender --no-reconnect -u '{USER}' -d {DOMAIN} -T {PROTOCOL} {SERVER}"
+    cmd=f"SHELL=/bin/bash netExtender --no-reconnect -u '{USER}' -d {DOMAIN} -T {PROTOCOL} {SERVER}"
 
     print (f"{now_str()} Starting vpn with cmd: {cmd}")
     child = pexpect.spawn('/bin/bash', ['-c', cmd])
