@@ -88,7 +88,7 @@ process() {
         outfile=$(printf ".snip%03d.m4a" $count)
         count=$((count + 1))
         echo "Writing to $outfile"
-        ffmpeg -hide_banner -loglevel error -i $INFILE -ss $start -to $end -acodec copy $outfile
+        ffmpeg -hide_banner -loglevel error -i "$INFILE" -ss $start -to $end -acodec copy "$outfile"
         if [ $? -ne 0 ] ; then
             exit
         fi
@@ -96,7 +96,7 @@ process() {
     count=$((count - 1))
 
     echo "We have $count snips in total"
-    rm .inlist.txt
+    rm -f .inlist.txt
 
     for i in $(seq 1 ${count}) ; do
         outfile=$(printf ".snip%03d.m4a" $i)
@@ -108,6 +108,7 @@ process() {
     rm -f $OUTFILE
     echo "concatenating"
     ffmpeg -hide_banner -loglevel error -f concat -safe 0 -i .inlist.txt -c copy $OUTFILE
+    rm -f .snip*m4a
 }
 
 parse_args "$@"
