@@ -20,7 +20,9 @@ def main():
                         help='List of columns to retain (default: Summary, Issue key, Status)')
     args = parser.parse_args()
 
-    filter_columns(args.input_csv, args.output_csv, fixed_colums.extend(args.columns))
+    fixed_colums.extend(args.columns)
+
+    filter_columns(args.input_csv, args.output_csv, fixed_colums)
 
 if __name__ == '__main__':
     main()
