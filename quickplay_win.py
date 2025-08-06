@@ -99,6 +99,9 @@ def set_volume(gs, val):
             gs.player.audio_set_volume(val)
         gs.curr_volume = val
 
+def set_rate(gs, val):
+    gs.player.set_rate(val)
+
 def play_or_pause(gs):
     if gs.play_pause == 1:
         gs.player.pause()
@@ -132,6 +135,7 @@ helpString=\
     A        -> goto a-time
     B        -> set file-end as b-time
     t        -> Show tags of current file
+    e        -> set rate of player
 '''
 
 TMPDIR=tempfile.gettempdir()
@@ -193,7 +197,7 @@ def process_char(gs, char):
                 gs.curr_file_n -= 2
         elif char == 'g':
             add = 1
-        elif char == 'v' or char == 's':
+        elif char == 'v' or char == 's' or char == 'e':
             add = 1
         elif char == '*':
             starcurrent(gs)
@@ -255,7 +259,7 @@ def process_char(gs, char):
                 dump_playlist(gs)
             else:
                 pass
-        elif gs.user_in_so_far[0] == 'v' or gs.user_in_so_far[0] == 's':
+        elif gs.user_in_so_far[0] == 'v' or gs.user_in_so_far[0] == 's' or gs.user_in_so_far[0] == 'e':
             #we expect numbers only
             if char.isdigit():
                 add = 1
@@ -266,6 +270,9 @@ def process_char(gs, char):
             if gs.user_in_so_far[0] == 'v':
                 val=int(gs.user_in_so_far[1:])
                 set_volume(gs, val)
+            elif gs.user_in_so_far[0] == 'e':
+                val=float(gs.user_in_so_far[1:])
+                set_rate(gs, val)
             elif gs.user_in_so_far[0] == 's':
                 if ':' in gs.user_in_so_far:
                     minutes,seconds = gs.user_in_so_far[1:].split(':')
@@ -275,6 +282,12 @@ def process_char(gs, char):
                 val *= 1000
                 if val < gs.player.get_length() and val > 0:
                     gs.player.set_time(val)
+        elif char == '.':
+            if gs.user_in_so_far[0] == 'e':
+                add = 1
+            else:
+                ## stray '.'
+                pass
         elif char.isdigit():
             add = 1
         elif char == ":":
@@ -422,7 +435,7 @@ def main():
         r = gs.player.play()
         gs.play_pause = 1
         gs.song_playing = 1
-        wait_to_start = 0.75
+        wait_to_start = 1.0
         while wait_to_start >= 0:
             if not gs.player.is_playing():
                 sleep(0.25)
@@ -430,7 +443,7 @@ def main():
             else:
                 break
         if not gs.player.is_playing():
-            print ("Player hasn't started playing even after waiting 0.75 seconds for file {}".format(f))
+            print (f"Player hasn't started playing even after waiting {wait_to_start} seconds for file {f}")
             sys.exit(1)
         if r != 0:
             print ("Trouble in playing file {}".format(f))
