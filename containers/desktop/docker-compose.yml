@@ -1,0 +1,19 @@
+version: '3'
+services:
+  tor-proxy:
+    image: dockurr/tor
+    container_name: tor-proxy
+    ports:
+    - 9050:9050
+    networks:
+    - tor-net
+  ubuntu-lxde:
+    image: dorowu/ubuntu-desktop-lxde-vnc
+    container_name: ubuntu-lxde
+    ports:
+    - 6080:80
+    networks:
+    - tor-net
+networks:
+  tor-net:
+    driver: bridge
