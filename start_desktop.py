@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import argparse
 import os
 import subprocess
@@ -5,46 +7,63 @@ import subprocess
 def main():
     # Set up argument parser
     parser = argparse.ArgumentParser(description="Start Docker-based desktop environment")
-    parser.add_argument("--name", default="lakshman_desktop", help="Container name")
-    parser.add_argument("--fwd_local_port", default="6080", help="Local port to forward")
-    parser.add_argument("--WRITEDIR", help="Directory to mount for downloads")
-    parser.add_argument("--passwd", default="", help="VNC password")
-    parser.add_argument("--do_sudo", action="store_true", help="Run Docker command with sudo")
+    parser.add_argument("-n", "--name", help="Container name")
+    parser.add_argument("-p", "--port", default="6080", help="Local port to forward")
+    parser.add_argument("-w", "--writedir", help="Directory to mount for downloads")
+    parser.add_argument("-P", "--passwd", default="", help="VNC password")
+    parser.add_argument("-S", "--sudo", action="store_true", help="Run Docker command with sudo")
+    parser.add_argument("what", nargs="?", help="choose container", default="chrome", choices=["desktop", "chrome"])
 
-    # Parse arguments
     args = parser.parse_args()
 
-    # Set default WRITEDIR if not provided
-    if not args.WRITEDIR:
-        args.WRITEDIR = f"/tmp/{args.name}/Downloads"
+    extra_args = []
+    target_port = 12345
+    pass_var_name = "PASSWORD"
+    cont_name = "royzheng/chrome:latest"
+    write_target = "/config/Downloads"
 
-    # Create write directory
-    os.makedirs(args.WRITEDIR, exist_ok=True)
+    if args.what == "desktop":
+        target_port = 80
+        pass_var_name = "VNC_PASSWORD"
+        cont_name = "dorowu/ubuntu-desktop-lxde-vnc"
+        write_target = "/root/Downloads"
+    elif args.what == "chrome":
+        extra_args.extend(["-e", "PORT=12345"])
+        if not args.passwd:
+            args.passwd = "password"
 
-    # Build Docker command
+    if not args.name:
+        args.name = f"lakshman_{args.what}"
+
+    if not args.writedir:
+        args.writedir = f"/tmp/{args.name}/Downloads"
+
+    os.makedirs(args.writedir, exist_ok=True)
+
     docker_cmd = [
         "docker", "run", "-d", "--rm",
         "--name", args.name,
-        "-p", f"{args.fwd_local_port}:80",
+        "-p", f"{args.port}:{target_port}",
         "-v", "/dev/shm:/dev/shm",
         "-v", f"{os.path.expanduser('~')}:/hosthome:ro",
-        "-v", f"{args.WRITEDIR}:/root/Downloads",
+        "-v", f"{args.writedir}:{write_target}",
         "--add-host", "myhost:host-gateway"
     ]
+    docker_cmd.extend(extra_args)
 
-    # Add env file if password is set
     env_file_created = False
+    env_file = f"/tmp/{args.name}/env"
     if args.passwd:
-        with open("env", "w") as f:
-            f.write(f"VNC_PASSWORD={args.passwd}\n")
-        docker_cmd.extend(["--env-file", "./env"])
+        with open(env_file, "w") as f:
+            f.write(f"{pass_var_name}={args.passwd}\n")
+        docker_cmd.extend(["--env-file", env_file])
         env_file_created = True
 
     # Add image name
-    docker_cmd.append("dorowu/ubuntu-desktop-lxde-vnc")
+    docker_cmd.append(cont_name)
 
     # Prepend sudo if requested
-    if args.do_sudo:
+    if args.sudo:
         docker_cmd.insert(0, "sudo")
 
     # Print and execute the command
@@ -52,8 +71,8 @@ def main():
     subprocess.run(docker_cmd)
 
     # Clean up env file if it was created
-    if env_file_created and os.path.exists("env"):
-        os.remove("env")
+    if env_file_created and os.path.exists(env_file):
+        os.remove(env_file)
 
 if __name__ == "__main__":
     main()
