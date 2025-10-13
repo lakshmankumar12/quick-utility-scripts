@@ -12,6 +12,7 @@ def main():
     parser.add_argument("-w", "--writedir", help="Directory to mount for downloads")
     parser.add_argument("-P", "--passwd", default="", help="VNC password")
     parser.add_argument("-S", "--sudo", action="store_true", help="Run Docker command with sudo")
+    parser.add_argument("-D", "--dryrun", action="store_true", help="Dry Run.. just print docker command")
     parser.add_argument("what", nargs="?", help="choose container", default="chrome", choices=["desktop", "chrome"])
 
     args = parser.parse_args()
@@ -67,8 +68,20 @@ def main():
         docker_cmd.insert(0, "sudo")
 
     # Print and execute the command
-    print("running:", " ".join(docker_cmd))
-    subprocess.run(docker_cmd)
+    action = "running: "
+    if args.dryrun:
+        action = "Command:\n\n"
+    print(f"{action}{' '.join(docker_cmd)}")
+    if not args.dryrun:
+        subprocess.run(docker_cmd)
+    else:
+        print(f"\nmkdir -p {args.writedir}")
+        if env_file_created:
+            print(f"cat <<EOF > {env_file}")
+            with open(env_file) as fd:
+                print(fd.read(), end='')
+            print ('EOF')
+        print()
 
     # Clean up env file if it was created
     if env_file_created and os.path.exists(env_file):
