@@ -16,7 +16,7 @@ names_arr+=("lang")
 names_arr+=("general")
 
 cwd_arr=()
-cwd_arr+=("/host_c/Users/laksh/Downloads/tmp")
+cwd_arr+=("/host_c/Users/laksh/Downloads/dont-delete-tmp")
 cwd_arr+=("$HOME")
 cwd_arr+=("$HOME/github/nixPowerToolNotes")
 cwd_arr+=("$HOME/github/pynotes")

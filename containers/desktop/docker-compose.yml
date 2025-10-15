@@ -10,6 +10,7 @@ services:
   ubuntu-lxde:
     image: dorowu/ubuntu-desktop-lxde-vnc
     container_name: ubuntu-lxde
+    env_file: ./env
     ports:
     - 6080:80
     networks:
