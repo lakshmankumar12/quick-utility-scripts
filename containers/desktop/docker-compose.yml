@@ -4,17 +4,47 @@ services:
     image: dockurr/tor
     container_name: tor-proxy
     ports:
-    - 9050:9050
+      - 9050:9050
     networks:
-    - tor-net
+      - tor-net
+    profiles:
+      - desktop
+      - chrome
+
   ubuntu-lxde:
     image: dorowu/ubuntu-desktop-lxde-vnc
     container_name: ubuntu-lxde
     env_file: ./env
     ports:
-    - 6080:80
+      - 6080:80
     networks:
-    - tor-net
+      - tor-net
+    profiles:
+      - desktop
+    volumes:
+      - /home/lakshman/Downloads/desktop:/root/Downloads
+      - /home/lakshman:/hosthome:ro
+
+  chrome:
+    image: royzheng/chrome:latest
+    container_name: lakshman_chrome
+    ports:
+      - 6080:12345
+    volumes:
+      - /dev/shm:/dev/shm
+      - /home/lakshman:/hosthome:ro
+      - /home/lakshman/Downloads/chrome:/config/Downloads
+      - /home/lakshman/Downloads/chrome/startup.sh:/startup.sh
+    extra_hosts:
+      - "myhost:host-gateway"
+    environment:
+      - PORT=12345
+    env_file: /home/lakshman/Downloads/chrome/env
+    profiles:
+      - chrome
+    networks:
+      - tor-net
+
 networks:
   tor-net:
     driver: bridge
