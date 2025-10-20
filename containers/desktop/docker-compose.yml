@@ -13,7 +13,7 @@ services:
 
   ubuntu-lxde:
     image: dorowu/ubuntu-desktop-lxde-vnc
-    container_name: ubuntu-lxde
+    container_name: lakshman_desktop
     env_file: ./env
     ports:
       - 6080:80
@@ -34,7 +34,7 @@ services:
       - /dev/shm:/dev/shm
       - /home/lakshman:/hosthome:ro
       - /home/lakshman/Downloads/chrome:/config/Downloads
-      - /home/lakshman/Downloads/chrome/startup.sh:/startup.sh
+      - ./chrome_startup.sh:/startup.sh
     extra_hosts:
       - "myhost:host-gateway"
     environment:
