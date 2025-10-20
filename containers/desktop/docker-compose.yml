@@ -14,7 +14,7 @@ services:
   ubuntu-lxde:
     image: dorowu/ubuntu-desktop-lxde-vnc
     container_name: lakshman_desktop
-    env_file: ./env
+    env_file: /home/lakshman/Downloads/desktop/env
     ports:
       - 6080:80
     networks:
