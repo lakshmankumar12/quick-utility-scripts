@@ -21,6 +21,7 @@ services:
       - tor-net
     profiles:
       - desktop
+      - desktop_only
     volumes:
       - /home/lakshman/Downloads/desktop:/root/Downloads
       - /home/lakshman:/hosthome:ro
@@ -42,6 +43,7 @@ services:
     env_file: /home/lakshman/Downloads/chrome/env
     profiles:
       - chrome
+      - chrome_only
     networks:
       - tor-net
 
