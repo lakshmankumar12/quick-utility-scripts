@@ -168,6 +168,19 @@
 <body>
     <h1>🏃 Marathon Pace Planner</h1>
 
+    <div class="section" style="background: linear-gradient(135deg, #4a90d9, #357abd); color: white;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div>
+                <div style="font-size: 14px; opacity: 0.9;">Total Marathon Time</div>
+                <div id="totalTime" style="font-size: 2.5rem; font-weight: 700; font-family: monospace;">0:00:00</div>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 13px; opacity: 0.9;">Running: <span id="runningTime" style="font-family: monospace;">0:00:00</span></div>
+                <div style="font-size: 13px; opacity: 0.9;">Rest: <span id="restTime" style="font-family: monospace;">0:00:00</span></div>
+            </div>
+        </div>
+    </div>
+
     <div class="section">
         <div class="rest-input">
             <label for="restBreak">Total Rest Break Duration:</label>
@@ -372,6 +385,9 @@
             
             // Update Table 2
             let cumulative = 0;
+            let runningTotal = 0;
+            const restBreak = parseTime(document.getElementById('restBreak').value);
+            
             kms.forEach((km, i) => {
                 const pace = getPaceForKm(km, chunkPaces);
                 document.getElementById(`kmPace${i}`).textContent = formatPace(pace);
@@ -379,8 +395,8 @@
                 if (km === 42.2) {
                     // Only 0.2 km for the last segment
                     cumulative += pace * 0.2;
+                    runningTotal = cumulative;
                     // Add rest break to final time
-                    const restBreak = parseTime(document.getElementById('restBreak').value);
                     cumulative += restBreak;
                 } else {
                     cumulative += pace;
@@ -388,6 +404,11 @@
                 
                 document.getElementById(`kmCum${i}`).textContent = formatTime(cumulative);
             });
+            
+            // Update top display
+            document.getElementById('totalTime').textContent = formatTime(runningTotal + restBreak);
+            document.getElementById('runningTime').textContent = formatTime(runningTotal);
+            document.getElementById('restTime').textContent = formatTime(restBreak);
         }
 
         // Copy Table 2 to clipboard as TSV
