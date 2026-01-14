@@ -87,7 +87,7 @@ process() {
         eval $cmd
         outfile=$(printf ".snip%03d.m4a" $count)
         count=$((count + 1))
-        echo "Writing to $outfile"
+        echo "Writing to $outfile for start: $start to end: $end"
         ffmpeg -hide_banner -loglevel error -i "$INFILE" -ss $start -to $end -acodec copy "$outfile"
         if [ $? -ne 0 ] ; then
             exit

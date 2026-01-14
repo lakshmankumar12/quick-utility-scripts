@@ -8,7 +8,6 @@ services:
     networks:
       - tor-net
     profiles:
-      - desktop
       - chrome
 
   ubuntu-lxde:
@@ -17,14 +16,17 @@ services:
     env_file: /home/lakshman/Downloads/desktop/env
     ports:
       - 6080:80
-    networks:
-      - tor-net
     profiles:
       - desktop
       - desktop_only
     volumes:
       - /home/lakshman/Downloads/desktop:/root/Downloads
       - /home/lakshman:/hosthome:ro
+    devices:
+      - /dev/ppp:/dev/ppp
+    cap_add:
+      - NET_ADMIN
+      - MKNOD
 
   chrome:
     image: royzheng/chrome:latest

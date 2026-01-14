@@ -49,7 +49,10 @@ def connect_via_blr(opts):
     c.expect(["Enter passphrase for key '/home/magma/.ssh/lakshman_key':"])
     print("sending pass-key-2")
     c.sendline(password)
-    c.expect(['lakshman@lakshmandevhetzner'])
+    res = c.expect(['lakshman@lakshmandevhetzner', 'Would you like to update'])
+    if res == 1:
+        c.sendline("n")
+        c.expect(['lakshman@lakshmandevhetzner'])
     print("ssh complete, attaching tmux")
     c.sendline('ta')
     c.interact(escape_character=None)
@@ -58,7 +61,10 @@ def connect_via_blr(opts):
 def connect_direct():
     print("sshing to myhetzner")
     c = spawn_child("ssh -o ServerAliveInterval=30 -o ServerAliveCountMax=1 myhetzner")
-    c.expect(['lakshman@lakshmandevhetzner'])
+    res = c.expect(['lakshman@lakshmandevhetzner', 'Would you like to update'])
+    if res == 1:
+        c.sendline("n")
+        c.expect(['lakshman@lakshmandevhetzner'])
     print("ssh complete, attaching tmux")
     c.sendline('ta')
     c.interact(escape_character=None)
