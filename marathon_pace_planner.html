@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marathon Pace Planner</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section h2 {
+            margin-top: 0;
+            color: #444;
+            font-size: 1.1rem;
+            border-bottom: 2px solid #4a90d9;
+            padding-bottom: 8px;
+        }
+        .rest-input {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .rest-input label {
+            font-weight: 600;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            text-align: center;
+        }
+        th {
+            background: #4a90d9;
+            color: white;
+            font-weight: 600;
+        }
+        tbody tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        tbody tr:hover {
+            background: #e8f4fc;
+        }
+        input[type="text"] {
+            width: 80px;
+            padding: 6px 8px;
+            border: 2px solid #ffd700;
+            border-radius: 4px;
+            background: #ffffd9;
+            text-align: center;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #4a90d9;
+            background: white;
+        }
+        .chunk-label {
+            font-weight: 500;
+        }
+        .computed {
+            font-family: monospace;
+            color: #333;
+        }
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn-copy {
+            background: #28a745;
+            color: white;
+        }
+        .btn-copy:hover {
+            background: #218838;
+        }
+        .btn-share {
+            background: #4a90d9;
+            color: white;
+        }
+        .btn-share:hover {
+            background: #357abd;
+        }
+        .btn-reset {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-reset:hover {
+            background: #545b62;
+        }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 6px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 1000;
+        }
+        .toast.show {
+            opacity: 1;
+        }
+        .final-row {
+            background: #d4edda !important;
+            font-weight: 600;
+        }
+        .table2-container {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .share-url {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 12px;
+            display: none;
+        }
+        .instructions {
+            font-size: 13px;
+            color: #666;
+            margin-top: 10px;
+        }
+        .instructions li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🏃 Marathon Pace Planner</h1>
+
+    <div class="section" style="background: linear-gradient(135deg, #4a90d9, #357abd); color: white;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div>
+                <div style="font-size: 14px; opacity: 0.9;">Total Marathon Time</div>
+                <div id="totalTime" style="font-size: 2.5rem; font-weight: 700; font-family: monospace;">0:00:00</div>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 13px; opacity: 0.9;">Running: <span id="runningTime" style="font-family: monospace;">0:00:00</span></div>
+                <div style="font-size: 13px; opacity: 0.9;">Rest: <span id="restTime" style="font-family: monospace;">0:00:00</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="rest-input">
+            <label for="restBreak">Total Rest Break Duration:</label>
+            <input type="text" id="restBreak" value="0:00" placeholder="mm:ss">
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Table 1: Pace Control by Chunk</h2>
+        <table id="table1">
+            <thead>
+                <tr>
+                    <th>Chunk (KM)</th>
+                    <th>Pace (mm:ss)</th>
+                    <th>Increment</th>
+                </tr>
+            </thead>
+            <tbody id="table1Body"></tbody>
+        </table>
+        <ul class="instructions">
+            <li>Enter base pace in first row (e.g., 6:40)</li>
+            <li>Enter increments for other chunks (negative to speed up, e.g., -0:10)</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>Table 2: Detailed KM Tracking</h2>
+        <div class="buttons">
+            <button class="btn-copy" onclick="copyTable()">📋 Copy Table to Clipboard</button>
+            <button class="btn-share" onclick="generateShareLink()">🔗 Generate Share Link</button>
+            <button class="btn-reset" onclick="resetAll()">↺ Reset</button>
+        </div>
+        <div class="share-url" id="shareUrl"></div>
+        <div class="table2-container">
+            <table id="table2">
+                <thead>
+                    <tr>
+                        <th>KM</th>
+                        <th>Pace (mm:ss)</th>
+                        <th>Cumulative Time</th>
+                    </tr>
+                </thead>
+                <tbody id="table2Body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const chunks = [
+            { label: "1-5", start: 1, end: 5 },
+            { label: "6-10", start: 6, end: 10 },
+            { label: "11-15", start: 11, end: 15 },
+            { label: "16-20", start: 16, end: 20 },
+            { label: "21-25", start: 21, end: 25 },
+            { label: "26-30", start: 26, end: 30 },
+            { label: "31-35", start: 31, end: 35 },
+            { label: "36-40", start: 36, end: 40 },
+            { label: "41-42.2", start: 41, end: 42.2 }
+        ];
+
+        const kms = [...Array.from({length: 42}, (_, i) => i + 1), 42.2];
+
+        // Parse time string (mm:ss or m:ss) to seconds
+        function parseTime(str) {
+            if (!str || str === '-') return 0;
+            const negative = str.startsWith('-');
+            const clean = str.replace('-', '').trim();
+            const parts = clean.split(':');
+            let seconds = 0;
+            if (parts.length === 2) {
+                seconds = parseInt(parts[0]) * 60 + parseInt(parts[1]);
+            } else if (parts.length === 3) {
+                seconds = parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2]);
+            }
+            return negative ? -seconds : seconds;
+        }
+
+        // Format seconds to mm:ss
+        function formatPace(seconds) {
+            const negative = seconds < 0;
+            seconds = Math.abs(seconds);
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60);
+            return (negative ? '-' : '') + `${m}:${s.toString().padStart(2, '0')}`;
+        }
+
+        // Format seconds to h:mm:ss
+        function formatTime(seconds) {
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = Math.floor(seconds % 60);
+            return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        // Build Table 1
+        function buildTable1() {
+            const tbody = document.getElementById('table1Body');
+            tbody.innerHTML = '';
+            
+            chunks.forEach((chunk, i) => {
+                const tr = document.createElement('tr');
+                
+                // Chunk label
+                const tdLabel = document.createElement('td');
+                tdLabel.className = 'chunk-label';
+                tdLabel.textContent = chunk.label;
+                tr.appendChild(tdLabel);
+                
+                // Pace
+                const tdPace = document.createElement('td');
+                if (i === 0) {
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.id = 'basePace';
+                    input.value = '6:40';
+                    input.oninput = recalculate;
+                    tdPace.appendChild(input);
+                } else {
+                    tdPace.className = 'computed';
+                    tdPace.id = `pace${i}`;
+                }
+                tr.appendChild(tdPace);
+                
+                // Increment
+                const tdInc = document.createElement('td');
+                if (i === 0) {
+                    tdInc.textContent = '-';
+                } else {
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.id = `inc${i}`;
+                    input.value = '0:00';
+                    input.oninput = recalculate;
+                    tdInc.appendChild(input);
+                }
+                tr.appendChild(tdInc);
+                
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Build Table 2
+        function buildTable2() {
+            const tbody = document.getElementById('table2Body');
+            tbody.innerHTML = '';
+            
+            kms.forEach((km, i) => {
+                const tr = document.createElement('tr');
+                if (km === 42.2) tr.className = 'final-row';
+                
+                const tdKm = document.createElement('td');
+                tdKm.textContent = km;
+                tr.appendChild(tdKm);
+                
+                const tdPace = document.createElement('td');
+                tdPace.className = 'computed';
+                tdPace.id = `kmPace${i}`;
+                tr.appendChild(tdPace);
+                
+                const tdCum = document.createElement('td');
+                tdCum.className = 'computed';
+                tdCum.id = `kmCum${i}`;
+                tr.appendChild(tdCum);
+                
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Get chunk pace in seconds
+        function getChunkPaces() {
+            const basePace = parseTime(document.getElementById('basePace').value);
+            const paces = [basePace];
+            
+            for (let i = 1; i < chunks.length; i++) {
+                const inc = parseTime(document.getElementById(`inc${i}`).value);
+                paces.push(paces[i-1] + inc);
+            }
+            
+            return paces;
+        }
+
+        // Get pace for a given km
+        function getPaceForKm(km, chunkPaces) {
+            for (let i = 0; i < chunks.length; i++) {
+                if (km >= chunks[i].start && km <= chunks[i].end) {
+                    return chunkPaces[i];
+                }
+            }
+            return chunkPaces[chunkPaces.length - 1];
+        }
+
+        // Recalculate all values
+        function recalculate() {
+            const chunkPaces = getChunkPaces();
+            
+            // Update Table 1 computed paces
+            for (let i = 1; i < chunks.length; i++) {
+                document.getElementById(`pace${i}`).textContent = formatPace(chunkPaces[i]);
+            }
+            
+            // Update Table 2
+            let cumulative = 0;
+            let runningTotal = 0;
+            const restBreak = parseTime(document.getElementById('restBreak').value);
+            
+            kms.forEach((km, i) => {
+                const pace = getPaceForKm(km, chunkPaces);
+                document.getElementById(`kmPace${i}`).textContent = formatPace(pace);
+                
+                if (km === 42.2) {
+                    // Only 0.2 km for the last segment
+                    cumulative += pace * 0.2;
+                    runningTotal = cumulative;
+                    // Add rest break to final time
+                    cumulative += restBreak;
+                } else {
+                    cumulative += pace;
+                }
+                
+                document.getElementById(`kmCum${i}`).textContent = formatTime(cumulative);
+            });
+            
+            // Update top display
+            document.getElementById('totalTime').textContent = formatTime(runningTotal + restBreak);
+            document.getElementById('runningTime').textContent = formatTime(runningTotal);
+            document.getElementById('restTime').textContent = formatTime(restBreak);
+        }
+
+        // Copy Table 2 to clipboard as TSV
+        function copyTable() {
+            const rows = ['KM\tPace (mm:ss)\tCumulative Time'];
+            
+            kms.forEach((km, i) => {
+                const pace = document.getElementById(`kmPace${i}`).textContent;
+                const cum = document.getElementById(`kmCum${i}`).textContent;
+                rows.push(`${km}\t${pace}\t${cum}`);
+            });
+            
+            navigator.clipboard.writeText(rows.join('\n')).then(() => {
+                showToast('Table copied to clipboard!');
+            });
+        }
+
+        // Generate shareable URL
+        function generateShareLink() {
+            const params = new URLSearchParams();
+            params.set('rest', document.getElementById('restBreak').value);
+            params.set('base', document.getElementById('basePace').value);
+            
+            const increments = [];
+            for (let i = 1; i < chunks.length; i++) {
+                increments.push(document.getElementById(`inc${i}`).value);
+            }
+            params.set('inc', increments.join(','));
+            
+            const url = window.location.origin + window.location.pathname + '?' + params.toString();
+            
+            const shareDiv = document.getElementById('shareUrl');
+            shareDiv.textContent = url;
+            shareDiv.style.display = 'block';
+            
+            navigator.clipboard.writeText(url).then(() => {
+                showToast('Share link copied to clipboard!');
+            });
+        }
+
+        // Load from URL params
+        function loadFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            
+            if (params.has('rest')) {
+                document.getElementById('restBreak').value = params.get('rest');
+            }
+            if (params.has('base')) {
+                document.getElementById('basePace').value = params.get('base');
+            }
+            if (params.has('inc')) {
+                const increments = params.get('inc').split(',');
+                increments.forEach((inc, i) => {
+                    const el = document.getElementById(`inc${i + 1}`);
+                    if (el) el.value = inc;
+                });
+            }
+        }
+
+        // Reset all inputs
+        function resetAll() {
+            document.getElementById('restBreak').value = '0:00';
+            document.getElementById('basePace').value = '6:40';
+            for (let i = 1; i < chunks.length; i++) {
+                document.getElementById(`inc${i}`).value = '0:00';
+            }
+            document.getElementById('shareUrl').style.display = 'none';
+            recalculate();
+            showToast('Reset to defaults');
+        }
+
+        // Show toast notification
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        // Initialize
+        buildTable1();
+        buildTable2();
+        loadFromUrl();
+        recalculate();
+
+        // Add event listener for rest break
+        document.getElementById('restBreak').oninput = recalculate;
+    </script>
+</body>
+</html>
