@@ -57,9 +57,6 @@
             color: white;
             font-weight: 600;
         }
-        tbody tr:nth-child(even) {
-            background: #f9f9f9;
-        }
         tbody tr:hover {
             background: #e8f4fc;
         }
@@ -140,6 +137,12 @@
         .final-row {
             background: #d4edda !important;
             font-weight: 600;
+        }
+        .chunk-grey {
+            background: #f0f0f0;
+        }
+        tbody tr:hover {
+            background: #e8f4fc;
         }
         .table2-container {
             max-height: 500px;
@@ -324,6 +327,16 @@
             });
         }
 
+        // Get chunk index for a km
+        function getChunkIndex(km) {
+            for (let i = 0; i < chunks.length; i++) {
+                if (km >= chunks[i].start && km <= chunks[i].end) {
+                    return i;
+                }
+            }
+            return chunks.length - 1;
+        }
+
         // Build Table 2
         function buildTable2() {
             const tbody = document.getElementById('table2Body');
@@ -331,7 +344,13 @@
             
             kms.forEach((km, i) => {
                 const tr = document.createElement('tr');
-                if (km === 42.2) tr.className = 'final-row';
+                const chunkIdx = getChunkIndex(km);
+                
+                if (km === 42.2) {
+                    tr.className = 'final-row';
+                } else if (chunkIdx % 2 === 1) {
+                    tr.className = 'chunk-grey';
+                }
                 
                 const tdKm = document.createElement('td');
                 tdKm.textContent = km;
@@ -385,7 +404,6 @@
             
             // Update Table 2
             let cumulative = 0;
-            let runningTotal = 0;
             const restBreak = parseTime(document.getElementById('restBreak').value);
             
             kms.forEach((km, i) => {
@@ -395,9 +413,6 @@
                 if (km === 42.2) {
                     // Only 0.2 km for the last segment
                     cumulative += pace * 0.2;
-                    runningTotal = cumulative;
-                    // Add rest break to final time
-                    cumulative += restBreak;
                 } else {
                     cumulative += pace;
                 }
@@ -406,8 +421,8 @@
             });
             
             // Update top display
-            document.getElementById('totalTime').textContent = formatTime(runningTotal + restBreak);
-            document.getElementById('runningTime').textContent = formatTime(runningTotal);
+            document.getElementById('totalTime').textContent = formatTime(cumulative + restBreak);
+            document.getElementById('runningTime').textContent = formatTime(cumulative);
             document.getElementById('restTime').textContent = formatTime(restBreak);
         }
 
