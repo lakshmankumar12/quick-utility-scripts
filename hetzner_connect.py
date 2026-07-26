@@ -40,19 +40,39 @@ def connect_via_blr(opts):
         password = fd.read().strip()
     print("sshing to myhetzner via blr")
     c = spawn_child("ssh -o ServerAliveInterval=30 -o ServerAliveCountMax=1 bastionblr")
-    c.expect(['magma@perf-s1ap-server'])
+    try:
+        c.expect(['magma@perf-s1ap-server'])
+    except pexpect.EOF:
+        print("Error: SSH connection to bastionblr closed unexpectedly (EOF).")
+        return
     print("logged into blr")
     c.sendline('ssh lakshman_dev')
-    c.expect(["Enter passphrase for key '/home/magma/.ssh/lakshman_key':"])
+    try:
+        c.expect(["Enter passphrase for key '/home/magma/.ssh/lakshman_key':"])
+    except pexpect.EOF:
+        print("Error: Connection closed before passphrase prompt (EOF).")
+        return
     print("sending pass-key-1")
     c.sendline(password)
-    c.expect(["Enter passphrase for key '/home/magma/.ssh/lakshman_key':"])
+    try:
+        c.expect(["Enter passphrase for key '/home/magma/.ssh/lakshman_key':"])
+    except pexpect.EOF:
+        print("Error: Connection closed after first passphrase (EOF).")
+        return
     print("sending pass-key-2")
     c.sendline(password)
-    res = c.expect(['lakshman@lakshmandevhetzner', 'Would you like to update'])
+    try:
+        res = c.expect(['lakshman@lakshmandevhetzner', 'Would you like to update'])
+    except pexpect.EOF:
+        print("Error: SSH connection closed before reaching hetzner prompt (EOF).")
+        return
     if res == 1:
         c.sendline("n")
-        c.expect(['lakshman@lakshmandevhetzner'])
+        try:
+            c.expect(['lakshman@lakshmandevhetzner'])
+        except pexpect.EOF:
+            print("Error: Connection closed after update prompt response (EOF).")
+            return
     print("ssh complete, attaching tmux")
     c.sendline('ta')
     c.interact(escape_character=None)
@@ -61,7 +81,11 @@ def connect_via_blr(opts):
 def connect_direct():
     print("sshing to myhetzner")
     c = spawn_child("ssh -o ServerAliveInterval=30 -o ServerAliveCountMax=1 myhetzner")
-    res = c.expect(['lakshman@lakshmandevhetzner', 'Would you like to update'])
+    try:
+        res = c.expect(['lakshman@lakshmandevhetzner', 'Would you like to update'])
+    except pexpect.EOF:
+        print("Error: SSH connection closed unexpectedly (EOF). Check that myhetzner is reachable and SSH config is correct.")
+        return
     if res == 1:
         c.sendline("n")
         c.expect(['lakshman@lakshmandevhetzner'])
