@@ -10,6 +10,7 @@ class UploadHandler(SimpleHTTPRequestHandler):
     def do_POST(self):
         length = int(self.headers['Content-Length'])
         filename = os.path.basename(self.path.strip('/')) or 'uploaded_file'
+        print(f'Receiving {length} bytes and saving as {filename}')
         with open(filename, 'wb') as f:
             remaining = length
             while remaining > 0:
@@ -19,6 +20,7 @@ class UploadHandler(SimpleHTTPRequestHandler):
         self.send_response(200)
         self.end_headers()
         self.wfile.write(f'Saved: {filename}\n'.encode())
+        print(f'Received {length} bytes and saved as {filename}')
 
 parser = argparse.ArgumentParser()
 parser.add_argument('port', nargs='?', type=int, default=8000)
